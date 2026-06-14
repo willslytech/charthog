@@ -148,10 +148,10 @@ export function computeMegaAlpha(data: CandleBar[]): MegaAlphaResult {
   const closes  = data.map(d => d.close);
   const volumes = data.map(d => d.volume);
 
-  // Adapt lookbacks to available data so shorter timeframes still produce output
-  const zs_lb       = Math.min(252, Math.max(30, Math.floor(n * 0.85)));
-  const ic_lb       = Math.min(63,  Math.max(10, Math.floor(n * 0.25)));
-  const combo_zs_lb = Math.min(63,  Math.max(15, Math.floor(n * 0.40)));
+  // Smaller fractions preserve more bars for signal eligibility after warmup
+  const zs_lb       = Math.min(120, Math.max(15, Math.floor(n * 0.50)));
+  const ic_lb       = Math.min(20,  Math.max(5,  Math.floor(n * 0.10)));
+  const combo_zs_lb = Math.min(20,  Math.max(8,  Math.floor(n * 0.15)));
 
   // ── EMAs (overlay lines) ─────────────────────────────────────────────────
   const e8  = emaArr(closes, 8);
@@ -216,7 +216,7 @@ export function computeMegaAlpha(data: CandleBar[]): MegaAlphaResult {
   const comboZ = zscoreArr(comboRaw, combo_zs_lb);
 
   // ── BUY / EXIT rules ──────────────────────────────────────────────────────
-  const ENTRY = 1.0, EXIT = -0.3, MIN_BULL = 4;
+  const ENTRY = 0.75, EXIT = -0.2, MIN_BULL = 3;
   const MIN_WARMUP = ic_lb + combo_zs_lb + 5;
 
   const isLong: boolean[] = [];
