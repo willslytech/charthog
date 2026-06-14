@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { SymbolSearch } from '@/components/SymbolSearch';
 import { RightPanel } from '@/components/RightPanel';
+import { AppNav } from '@/components/AppNav';
 import { cn } from '@/lib/utils';
 import type { CandleBar, StockQuote, Timeframe } from '@/lib/types';
 import {
@@ -142,23 +143,13 @@ export default function Home() {
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-background">
-      {/* ── Header ── */}
-      <header className="shrink-0 border-b border-slate-800/80 bg-background/80 backdrop-blur-md z-40">
-        <div className="mx-auto max-w-screen-2xl px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
-          {/* Logo */}
-          <a href="/" className="flex items-center gap-2.5 shrink-0 group">
-            <div className="transition-transform group-hover:scale-110 duration-200">
-              <PigLogo size={34} />
-            </div>
-            <span className="hidden sm:block font-bold text-lg tracking-tight text-white">
-              Chart<span className="text-orange-400">Hog</span>
-            </span>
-          </a>
+      {/* ── App nav ── */}
+      <AppNav />
 
-          {/* Search */}
-          <div className="flex-1 flex justify-end">
-            <SymbolSearch value={symbol} onSelect={handleSelect} />
-          </div>
+      {/* ── Chart sub-header: symbol search ── */}
+      <header className="shrink-0 border-b border-slate-800/60 bg-background/80 backdrop-blur-md z-30">
+        <div className="px-4 sm:px-6 h-11 flex items-center justify-end gap-4">
+          <SymbolSearch value={symbol} onSelect={handleSelect} />
         </div>
       </header>
 

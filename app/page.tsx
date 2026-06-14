@@ -140,7 +140,7 @@ export default function LandingPage() {
             Chart<span className="text-orange-400">Hog</span>
           </span>
         </div>
-        <Link href="/chart">
+        <Link href="/home">
           <button className="rounded-lg border border-slate-700/60 px-4 py-1.5 font-mono text-sm text-slate-400 transition-all duration-150 hover:border-slate-500 hover:text-white">
             Open App →
           </button>
@@ -195,7 +195,7 @@ export default function LandingPage() {
           </p>
 
           {/* CTA */}
-          <Link href="/chart">
+          <Link href="/home">
             <button
               className="group relative rounded-xl px-10 py-4 text-lg font-bold text-black transition-all duration-200 active:scale-95"
               style={{
