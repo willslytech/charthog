@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import {
   createChart,
+  createSeriesMarkers,
   CandlestickSeries,
   HistogramSeries,
   LineSeries,
@@ -11,11 +12,11 @@ import {
 } from 'lightweight-charts';
 import type { IChartApi, ISeriesApi, UTCTimestamp } from 'lightweight-charts';
 import type { CandleBar } from '@/lib/types';
+import { computeMegaAlpha } from '@/lib/megaAlpha';
 
-const BULL = '#22c55e';
-const BEAR = '#ef4444';
+const BULL   = '#22c55e';
+const BEAR   = '#ef4444';
 const ACCENT = '#38bdf8';
-const HOG_COLOR = '#fb923c';
 
 interface StockChartProps {
   data: CandleBar[];
@@ -23,27 +24,17 @@ interface StockChartProps {
   height?: number;
 }
 
-function calcEMA(data: CandleBar[], period: number) {
-  if (data.length < period) return [];
-  const k = 2 / (period + 1);
-  let ema = data.slice(0, period).reduce((s, d) => s + d.close, 0) / period;
-  const result: { time: UTCTimestamp; value: number }[] = [];
-
-  for (let i = period - 1; i < data.length; i++) {
-    if (i > period - 1) ema = data[i].close * k + ema * (1 - k);
-    result.push({ time: data[i].time as UTCTimestamp, value: ema });
-  }
-  return result;
-}
-
 export function StockChart({ data, showHogIndicator = false, height = 500 }: StockChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const chartRef = useRef<IChartApi | null>(null);
-  const candleRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
-  const volumeRef = useRef<ISeriesApi<'Histogram'> | null>(null);
-  const hogRef = useRef<ISeriesApi<'Line'> | null>(null);
+  const chartRef     = useRef<IChartApi | null>(null);
+  const candleRef    = useRef<ISeriesApi<'Candlestick'> | null>(null);
+  const volumeRef    = useRef<ISeriesApi<'Histogram'> | null>(null);
+  const ema21Ref     = useRef<ISeriesApi<'Line'> | null>(null);
+  const ema55Ref     = useRef<ISeriesApi<'Line'> | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const markersRef   = useRef<any>(null);
 
-  // Initialize chart once
+  // ── Initialize chart once ────────────────────────────────────────────────
   useEffect(() => {
     if (!containerRef.current) return;
 
@@ -60,20 +51,10 @@ export function StockChart({ data, showHogIndicator = false, height = 500 }: Sto
       },
       crosshair: {
         mode: CrosshairMode.Normal,
-        vertLine: {
-          color: ACCENT,
-          width: 1,
-          labelBackgroundColor: '#0f172a',
-        },
-        horzLine: {
-          color: ACCENT,
-          width: 1,
-          labelBackgroundColor: '#0f172a',
-        },
+        vertLine: { color: ACCENT, width: 1, labelBackgroundColor: '#0f172a' },
+        horzLine: { color: ACCENT, width: 1, labelBackgroundColor: '#0f172a' },
       },
-      rightPriceScale: {
-        borderColor: 'rgba(148,163,184,0.1)',
-      },
+      rightPriceScale: { borderColor: 'rgba(148,163,184,0.1)' },
       timeScale: {
         borderColor: 'rgba(148,163,184,0.1)',
         timeVisible: true,
@@ -86,25 +67,41 @@ export function StockChart({ data, showHogIndicator = false, height = 500 }: Sto
     });
 
     const candleSeries = chart.addSeries(CandlestickSeries, {
-      upColor: BULL,
-      downColor: BEAR,
-      borderUpColor: BULL,
-      borderDownColor: BEAR,
-      wickUpColor: BULL,
-      wickDownColor: BEAR,
+      upColor: BULL, downColor: BEAR,
+      borderUpColor: BULL, borderDownColor: BEAR,
+      wickUpColor: BULL,   wickDownColor: BEAR,
     });
 
     const volumeSeries = chart.addSeries(HistogramSeries, {
       priceFormat: { type: 'volume' },
       priceScaleId: 'vol',
     });
-    chart.priceScale('vol').applyOptions({
-      scaleMargins: { top: 0.82, bottom: 0 },
+    chart.priceScale('vol').applyOptions({ scaleMargins: { top: 0.82, bottom: 0 } });
+
+    // EMA overlay lines (hidden until Mega-Alpha is toggled on)
+    const ema21Series = chart.addSeries(LineSeries, {
+      color: '#22d3ee',
+      lineWidth: 2,
+      title: 'EMA 21',
+      lastValueVisible: false,
+      priceLineVisible: false,
+    });
+    const ema55Series = chart.addSeries(LineSeries, {
+      color: '#fb923c',
+      lineWidth: 2,
+      title: 'EMA 55',
+      lastValueVisible: false,
+      priceLineVisible: false,
     });
 
-    chartRef.current = chart;
+    // Attach marker plugin to the candle series
+    markersRef.current = createSeriesMarkers(candleSeries, []);
+
+    chartRef.current  = chart;
     candleRef.current = candleSeries;
     volumeRef.current = volumeSeries;
+    ema21Ref.current  = ema21Series;
+    ema55Ref.current  = ema55Series;
 
     const ro = new ResizeObserver(() => {
       if (!containerRef.current) return;
@@ -115,55 +112,52 @@ export function StockChart({ data, showHogIndicator = false, height = 500 }: Sto
     return () => {
       ro.disconnect();
       chart.remove();
-      chartRef.current = null;
-      candleRef.current = null;
-      volumeRef.current = null;
-      hogRef.current = null;
+      chartRef.current = candleRef.current = volumeRef.current = null;
+      ema21Ref.current = ema55Ref.current = markersRef.current = null;
     };
   }, [height]);
 
-  // Update candle + volume data
+  // ── Update candle + volume data ──────────────────────────────────────────
   useEffect(() => {
     if (!candleRef.current || !volumeRef.current || !data.length) return;
 
     candleRef.current.setData(
-      data.map((d) => ({
-        time: d.time as UTCTimestamp,
-        open: d.open,
-        high: d.high,
-        low: d.low,
+      data.map(d => ({
+        time:  d.time  as UTCTimestamp,
+        open:  d.open,
+        high:  d.high,
+        low:   d.low,
         close: d.close,
       }))
     );
-
     volumeRef.current.setData(
-      data.map((d) => ({
-        time: d.time as UTCTimestamp,
+      data.map(d => ({
+        time:  d.time as UTCTimestamp,
         value: d.volume,
         color: d.close >= d.open ? `${BULL}30` : `${BEAR}30`,
       }))
     );
-
     chartRef.current?.timeScale().fitContent();
   }, [data]);
 
-  // Hog Indicator: EMA(20) in pig orange
+  // ── Mega-Alpha indicator ─────────────────────────────────────────────────
   useEffect(() => {
-    if (!chartRef.current || !data.length) return;
+    if (!ema21Ref.current || !ema55Ref.current || !markersRef.current) return;
 
-    if (showHogIndicator && !hogRef.current) {
-      hogRef.current = chartRef.current.addSeries(LineSeries, {
-        color: HOG_COLOR,
-        lineWidth: 2,
-        title: 'Hog EMA(20)',
-        lastValueVisible: true,
-        priceLineVisible: false,
-      });
+    if (!showHogIndicator || !data.length) {
+      ema21Ref.current.setData([]);
+      ema55Ref.current.setData([]);
+      markersRef.current.setMarkers([]);
+      return;
     }
 
-    if (hogRef.current) {
-      hogRef.current.setData(showHogIndicator ? calcEMA(data, 20) : []);
-    }
+    const { ema21, ema55, markers } = computeMegaAlpha(data);
+
+    ema21Ref.current.setData(ema21.map(d => ({ time: d.time as UTCTimestamp, value: d.value })));
+    ema55Ref.current.setData(ema55.map(d => ({ time: d.time as UTCTimestamp, value: d.value })));
+    markersRef.current.setMarkers(
+      markers.map(m => ({ ...m, time: m.time as UTCTimestamp }))
+    );
   }, [data, showHogIndicator]);
 
   return (

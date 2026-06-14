@@ -264,22 +264,22 @@ export default function Home() {
               <span className="hidden sm:inline">Refresh</span>
             </button>
 
-            {/* Hog Indicator toggle */}
+            {/* Mega-Alpha toggle */}
             <button
               onClick={() => setHogIndicator((v) => !v)}
               className={cn(
                 'flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all duration-150',
                 hogIndicator
-                  ? 'bg-orange-500/15 border-orange-500/50 text-orange-400 shadow-sm shadow-orange-500/20'
+                  ? 'bg-green-500/10 border-green-500/40 text-green-400 shadow-sm shadow-green-500/20'
                   : 'border-slate-700/50 text-slate-400 hover:text-slate-200 hover:border-slate-600'
               )}
             >
               <PigLogo size={16} />
-              <span>Hog Indicator</span>
+              <span>Mega-Alpha</span>
               <span
                 className={cn(
                   'w-1.5 h-1.5 rounded-full',
-                  hogIndicator ? 'bg-orange-400' : 'bg-slate-600'
+                  hogIndicator ? 'bg-green-400' : 'bg-slate-600'
                 )}
               />
             </button>
