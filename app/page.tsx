@@ -1,310 +1,243 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
-import dynamic from 'next/dynamic';
-import { SymbolSearch } from '@/components/SymbolSearch';
-import { cn } from '@/lib/utils';
-import type { CandleBar, StockQuote, Timeframe } from '@/lib/types';
-import {
-  TrendingUp,
-  TrendingDown,
-  RefreshCw,
-  AlertCircle,
-  BarChart2,
-} from 'lucide-react';
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { LandingCanvas } from '@/components/LandingCanvas';
 
-// Dynamic import keeps lightweight-charts out of the SSR bundle
-const StockChart = dynamic(
-  () => import('@/components/StockChart').then((m) => m.StockChart),
-  { ssr: false, loading: () => <ChartSkeleton /> }
-);
-
-const TIMEFRAMES: Timeframe[] = ['30M', '1H', '4H', '1D', '1W', '1M', '3M', '6M', '1Y', 'ALL'];
-
-// ── Pig SVG logo ─────────────────────────────────────────
-function PigLogo({ size = 36 }: { size?: number }) {
+// ── Pig mascot ────────────────────────────────────────────────────────────────
+function PigLogo({ size = 40 }: { size?: number }) {
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 40 40"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden="true"
-    >
-      {/* Ears */}
+    <svg width={size} height={size} viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
       <ellipse cx="9"  cy="14" rx="7" ry="7" fill="#fb923c" />
       <ellipse cx="31" cy="14" rx="7" ry="7" fill="#fb923c" />
       <ellipse cx="9"  cy="14" rx="4" ry="4" fill="#fde68a" />
       <ellipse cx="31" cy="14" rx="4" ry="4" fill="#fde68a" />
-      {/* Head */}
       <circle cx="20" cy="23" r="16" fill="#fb923c" />
-      {/* Eyes */}
       <circle cx="14" cy="20" r="2.5" fill="#fff" />
       <circle cx="26" cy="20" r="2.5" fill="#fff" />
       <circle cx="14.8" cy="20.8" r="1.3" fill="#0f172a" />
       <circle cx="26.8" cy="20.8" r="1.3" fill="#0f172a" />
-      {/* Snout */}
       <ellipse cx="20" cy="28" rx="7" ry="5" fill="#fcd5a0" />
-      {/* Nostrils */}
       <circle cx="17" cy="28.5" r="1.6" fill="#c2410c" />
       <circle cx="23" cy="28.5" r="1.6" fill="#c2410c" />
     </svg>
   );
 }
 
-// ── Loading skeleton ──────────────────────────────────────
-function ChartSkeleton() {
+// ── Bottom ticker band ────────────────────────────────────────────────────────
+const TICKERS = [
+  { sym: 'AAPL',    p: '189.42',  c: '+2.41%', up: true  },
+  { sym: 'TSLA',    p: '248.97',  c: '-1.83%', up: false },
+  { sym: 'NVDA',    p: '912.34',  c: '+5.21%', up: true  },
+  { sym: 'MSFT',    p: '421.07',  c: '+1.14%', up: true  },
+  { sym: 'AMZN',    p: '198.63',  c: '-0.62%', up: false },
+  { sym: 'META',    p: '534.18',  c: '+3.34%', up: true  },
+  { sym: 'SPY',     p: '541.22',  c: '+0.78%', up: true  },
+  { sym: 'QQQ',     p: '468.91',  c: '+1.22%', up: true  },
+  { sym: 'GOOG',    p: '182.45',  c: '+1.73%', up: true  },
+  { sym: 'JPM',     p: '214.82',  c: '-0.94%', up: false },
+  { sym: 'GS',      p: '481.23',  c: '+0.44%', up: true  },
+  { sym: 'BTC-USD', p: '67,842',  c: '+3.12%', up: true  },
+  { sym: 'NFLX',    p: '628.04',  c: '+2.09%', up: true  },
+  { sym: 'AMD',     p: '174.88',  c: '+4.18%', up: true  },
+  { sym: 'DIS',     p: '112.36',  c: '-0.77%', up: false },
+  { sym: 'BAC',     p: '38.92',   c: '-0.31%', up: false },
+];
+
+function TickerBand() {
+  // Duplicate for seamless infinite scroll
+  const items = [...TICKERS, ...TICKERS];
   return (
-    <div className="w-full h-full bg-slate-800/30 rounded-xl animate-pulse flex items-center justify-center">
-      <BarChart2 className="w-12 h-12 text-slate-700" />
+    <div className="fixed bottom-0 left-0 right-0 z-30 overflow-hidden border-t border-green-500/20 bg-black/90 backdrop-blur-sm">
+      <div className="flex" style={{ animation: 'tickerScroll 40s linear infinite' }}>
+        {items.map((t, i) => (
+          <div
+            key={i}
+            className="flex shrink-0 items-center gap-2 border-r border-slate-800/50 px-5 py-2.5"
+          >
+            <span className="font-mono text-xs font-bold text-white">{t.sym}</span>
+            <span className="font-mono text-xs text-slate-500">${t.p}</span>
+            <span
+              className={`font-mono text-xs font-semibold ${
+                t.up ? 'text-green-400' : 'text-red-400'
+              }`}
+            >
+              {t.c}
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
 
-// ── Stat pill ─────────────────────────────────────────────
-function StatPill({ label, value }: { label: string; value: string }) {
+// ── Stat counter ──────────────────────────────────────────────────────────────
+function StatCounter({
+  value,
+  label,
+}: {
+  value: string;
+  label: string;
+}) {
   return (
-    <div className="flex items-center gap-1.5 text-xs font-mono">
-      <span className="text-slate-500">{label}</span>
-      <span className="text-slate-200">{value}</span>
+    <div className="flex flex-col items-center gap-1">
+      <span
+        className="font-mono font-black text-2xl text-white"
+        style={{ textShadow: '0 0 20px rgba(34,197,94,0.4)' }}
+      >
+        {value}
+      </span>
+      <span className="text-xs text-slate-500 tracking-widest uppercase font-mono">{label}</span>
     </div>
   );
 }
 
-// ── Format helpers ────────────────────────────────────────
-const fmt = (n: number, decimals = 2) =>
-  n.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
-
-const fmtVol = (n: number) => {
-  if (n >= 1e9) return `${(n / 1e9).toFixed(2)}B`;
-  if (n >= 1e6) return `${(n / 1e6).toFixed(2)}M`;
-  if (n >= 1e3) return `${(n / 1e3).toFixed(1)}K`;
-  return String(n);
-};
-
-// ── Main page ─────────────────────────────────────────────
-export default function Home() {
-  const [symbol, setSymbol] = useState('AAPL');
-  const [symbolName, setSymbolName] = useState('Apple Inc.');
-  const [timeframe, setTimeframe] = useState<Timeframe>('30M');
-  const [candles, setCandles] = useState<CandleBar[]>([]);
-  const [quote, setQuote] = useState<StockQuote | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [hogIndicator, setHogIndicator] = useState(false);
-  const abortRef = useRef<AbortController | null>(null);
-
-  const fetchData = useCallback(
-    async (sym: string, tf: Timeframe) => {
-      abortRef.current?.abort();
-      const ctrl = new AbortController();
-      abortRef.current = ctrl;
-
-      setLoading(true);
-      setError(null);
-
-      try {
-        const [qRes, cRes] = await Promise.all([
-          fetch(`/api/quote?symbol=${sym}`, { signal: ctrl.signal }),
-          fetch(`/api/candles?symbol=${sym}&timeframe=${tf}`, { signal: ctrl.signal }),
-        ]);
-
-        const [qData, cData] = await Promise.all([qRes.json(), cRes.json()]);
-
-        if (qData.error) throw new Error(qData.error);
-        if (cData.error) throw new Error(cData.error);
-
-        setQuote(qData as StockQuote);
-        setCandles(cData as CandleBar[]);
-      } catch (err) {
-        if ((err as Error).name === 'AbortError') return;
-        setError(err instanceof Error ? err.message : 'Failed to fetch data');
-      } finally {
-        setLoading(false);
-      }
-    },
-    []
-  );
+// ── Landing page ──────────────────────────────────────────────────────────────
+export default function LandingPage() {
+  const [mouse, setMouse] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
-    fetchData(symbol, timeframe);
-  }, [symbol, timeframe, fetchData]);
-
-  const handleSelect = (sym: string, desc: string) => {
-    setSymbol(sym);
-    setSymbolName(desc);
-  };
-
-  const isPositive = quote ? quote.dp >= 0 : true;
-  const lastCandle = candles[candles.length - 1];
-  const vol = candles.reduce((s, c) => s + c.volume, 0);
+    const onMove = (e: MouseEvent) => {
+      setMouse({
+        x: (e.clientX / window.innerWidth - 0.5) * 28,
+        y: (e.clientY / window.innerHeight - 0.5) * 14,
+      });
+    };
+    window.addEventListener('mousemove', onMove);
+    return () => window.removeEventListener('mousemove', onMove);
+  }, []);
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
-      {/* ── Header ── */}
-      <header className="sticky top-0 z-40 border-b border-slate-800/80 bg-background/80 backdrop-blur-md">
-        <div className="mx-auto max-w-screen-2xl px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
-          {/* Logo */}
-          <a href="/" className="flex items-center gap-2.5 shrink-0 group">
-            <div className="transition-transform group-hover:scale-110 duration-200">
-              <PigLogo size={34} />
-            </div>
-            <span className="hidden sm:block font-bold text-lg tracking-tight text-white">
-              Chart<span className="text-orange-400">Hog</span>
-            </span>
-          </a>
+    <div className="relative min-h-screen overflow-hidden bg-[#050816] text-white select-none">
+      {/* Cinematic canvas background */}
+      <LandingCanvas />
 
-          {/* Search */}
-          <div className="flex-1 flex justify-end">
-            <SymbolSearch value={symbol} onSelect={handleSelect} />
-          </div>
+      {/* CRT scanlines */}
+      <div
+        className="pointer-events-none fixed inset-0 opacity-[0.035]"
+        style={{
+          zIndex: 1,
+          backgroundImage:
+            'repeating-linear-gradient(0deg,transparent,transparent 2px,#000 2px,#000 4px)',
+        }}
+      />
+
+      {/* Vignette */}
+      <div
+        className="pointer-events-none fixed inset-0"
+        style={{
+          zIndex: 1,
+          background:
+            'radial-gradient(ellipse 80% 80% at 50% 46%, transparent 30%, rgba(5,8,22,0.82) 100%)',
+        }}
+      />
+
+      {/* ── Header ─────────────────────────────────────────────────────────── */}
+      <header className="fixed left-0 right-0 top-0 z-40 flex items-center justify-between px-6 py-4">
+        <div className="flex items-center gap-2.5">
+          <PigLogo size={30} />
+          <span className="text-lg font-bold tracking-tight">
+            Chart<span className="text-orange-400">Hog</span>
+          </span>
         </div>
+        <Link href="/chart">
+          <button className="rounded-lg border border-slate-700/60 px-4 py-1.5 font-mono text-sm text-slate-400 transition-all duration-150 hover:border-slate-500 hover:text-white">
+            Open App →
+          </button>
+        </Link>
       </header>
 
-      {/* ── Main ── */}
-      <main className="flex-1 mx-auto w-full max-w-screen-2xl px-4 sm:px-6 py-5 flex flex-col gap-4">
-
-        {/* Error banner */}
-        {error && (
-          <div className="flex items-center gap-3 rounded-xl border border-red-500/25 bg-red-500/10 px-4 py-3 text-sm text-red-400">
-            <AlertCircle className="w-4 h-4 shrink-0" />
-            <span>{error}</span>
-            <button
-              onClick={() => fetchData(symbol, timeframe)}
-              className="ml-auto flex items-center gap-1.5 text-xs font-medium hover:text-red-300 transition-colors"
-            >
-              <RefreshCw className="w-3.5 h-3.5" /> Retry
-            </button>
-          </div>
-        )}
-
-        {/* ── Price card ── */}
-        <div className="rounded-2xl border border-slate-800/80 bg-card px-5 py-4">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            {/* Symbol + name */}
-            <div>
-              <div className="flex items-baseline gap-3">
-                <h1 className="text-2xl sm:text-3xl font-bold font-mono tracking-tight text-white">
-                  {symbol}
-                </h1>
-                <span className="text-sm text-slate-400 hidden sm:block">{symbolName}</span>
-              </div>
-
-              {quote ? (
-                <div className="mt-1 flex items-baseline gap-3">
-                  <span className="text-3xl sm:text-4xl font-bold font-mono text-white">
-                    ${fmt(quote.c)}
-                  </span>
-                  <span
-                    className={cn(
-                      'flex items-center gap-1 text-base font-mono font-semibold',
-                      isPositive ? 'text-green-400' : 'text-red-400'
-                    )}
-                  >
-                    {isPositive ? (
-                      <TrendingUp className="w-4 h-4" />
-                    ) : (
-                      <TrendingDown className="w-4 h-4" />
-                    )}
-                    {isPositive ? '+' : ''}
-                    {fmt(quote.d)} ({isPositive ? '+' : ''}{fmt(quote.dp)}%)
-                  </span>
-                </div>
-              ) : (
-                <div className="mt-2 h-10 w-48 rounded-lg bg-slate-800/60 animate-pulse" />
-              )}
-            </div>
-
-            {/* OHLCV stats */}
-            {quote && (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-1 text-right sm:text-left mt-1">
-                <StatPill label="O" value={`$${fmt(quote.o)}`} />
-                <StatPill label="H" value={`$${fmt(quote.h)}`} />
-                <StatPill label="L" value={`$${fmt(quote.l)}`} />
-                <StatPill label="PC" value={`$${fmt(quote.pc)}`} />
-                {vol > 0 && <StatPill label="Vol" value={fmtVol(vol)} />}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* ── Toolbar: timeframes + hog toggle ── */}
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          {/* Timeframe buttons */}
-          <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-800/50 border border-slate-700/40">
-            {TIMEFRAMES.map((tf) => (
-              <button
-                key={tf}
-                onClick={() => setTimeframe(tf)}
-                className={cn(
-                  'px-3 py-1.5 rounded-lg text-xs font-mono font-medium transition-all duration-150',
-                  timeframe === tf
-                    ? 'bg-sky-500 text-white shadow-sm shadow-sky-500/30'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
-                )}
-              >
-                {tf}
-              </button>
-            ))}
+      {/* ── Hero ────────────────────────────────────────────────────────────── */}
+      <main
+        className="relative flex min-h-screen flex-col items-center justify-center pb-16 px-4 text-center"
+        style={{ zIndex: 20 }}
+      >
+        {/* Parallax wrapper — follows mouse */}
+        <div
+          style={{
+            transform: `translate(${mouse.x}px, ${mouse.y}px)`,
+            transition: 'transform 0.12s ease-out',
+          }}
+        >
+          {/* Live status badge */}
+          <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-green-500/30 bg-green-500/10 px-3 py-1.5 font-mono text-xs text-green-400">
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-green-400" />
+            LIVE · NYSE · NASDAQ · 8,000+ SYMBOLS
           </div>
 
-          {/* Controls: refresh + hog indicator */}
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => fetchData(symbol, timeframe)}
-              disabled={loading}
-              className={cn(
-                'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium',
-                'border border-slate-700/50 text-slate-400 hover:text-slate-200 hover:border-slate-600',
-                'transition-all duration-150 disabled:opacity-50'
-              )}
-              aria-label="Refresh"
-            >
-              <RefreshCw className={cn('w-3.5 h-3.5', loading && 'animate-spin')} />
-              <span className="hidden sm:inline">Refresh</span>
-            </button>
-
-            {/* Mega-Alpha toggle */}
-            <button
-              onClick={() => setHogIndicator((v) => !v)}
-              className={cn(
-                'flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all duration-150',
-                hogIndicator
-                  ? 'bg-green-500/10 border-green-500/40 text-green-400 shadow-sm shadow-green-500/20'
-                  : 'border-slate-700/50 text-slate-400 hover:text-slate-200 hover:border-slate-600'
-              )}
-            >
-              <PigLogo size={16} />
-              <span>Mega-Alpha</span>
-              <span
-                className={cn(
-                  'w-1.5 h-1.5 rounded-full',
-                  hogIndicator ? 'bg-green-400' : 'bg-slate-600'
-                )}
-              />
-            </button>
-          </div>
-        </div>
-
-        {/* ── Chart ── */}
-        <div className="rounded-2xl border border-slate-800/80 bg-card p-2 sm:p-3 overflow-hidden">
-          <StockChart data={candles} showHogIndicator={hogIndicator} height={500} />
-        </div>
-
-        {/* ── Footer hint ── */}
-        <p className="text-center text-xs text-slate-600 pb-4">
-          Data via{' '}
-          <a
-            href="https://finnhub.io"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-slate-500 hover:text-sky-500 transition-colors"
+          {/* Pig */}
+          <div
+            className="mb-6 flex justify-center"
+            style={{ filter: 'drop-shadow(0 0 40px rgba(251,146,60,0.55))' }}
           >
-            Finnhub
-          </a>
-          {' '}· ChartHog is not financial advice · 🐷
-        </p>
+            <PigLogo size={96} />
+          </div>
+
+          {/* Title */}
+          <h1
+            className="mb-3 font-black leading-none tracking-tight"
+            style={{ fontSize: 'clamp(4rem, 12vw, 9rem)', textShadow: '0 0 80px rgba(255,255,255,0.1)' }}
+          >
+            Chart
+            <span
+              className="text-orange-400"
+              style={{ textShadow: '0 0 60px rgba(251,146,60,0.65), 0 0 120px rgba(251,146,60,0.25)' }}
+            >
+              Hog
+            </span>
+          </h1>
+
+          <p className="mb-2 text-xl font-light tracking-wide text-slate-300 sm:text-2xl">
+            The Stock Trader&apos;s Edge
+          </p>
+          <p className="mb-10 font-mono text-xs uppercase tracking-[0.22em] text-slate-600">
+            Real‑time data · Mega‑Alpha signals · Zero cost
+          </p>
+
+          {/* CTA */}
+          <Link href="/chart">
+            <button
+              className="group relative rounded-xl px-10 py-4 text-lg font-bold text-black transition-all duration-200 active:scale-95"
+              style={{
+                background: 'linear-gradient(135deg, #22c55e, #16a34a)',
+                boxShadow:
+                  '0 0 40px rgba(34,197,94,0.50), 0 0 80px rgba(34,197,94,0.22), inset 0 1px 0 rgba(255,255,255,0.15)',
+              }}
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLButtonElement).style.boxShadow =
+                  '0 0 60px rgba(34,197,94,0.70), 0 0 120px rgba(34,197,94,0.35), inset 0 1px 0 rgba(255,255,255,0.2)';
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLButtonElement).style.boxShadow =
+                  '0 0 40px rgba(34,197,94,0.50), 0 0 80px rgba(34,197,94,0.22), inset 0 1px 0 rgba(255,255,255,0.15)';
+              }}
+            >
+              Enter the Floor
+              <span className="ml-2 inline-block transition-transform duration-150 group-hover:translate-x-1.5">
+                →
+              </span>
+            </button>
+          </Link>
+
+          <p className="mt-5 font-mono text-xs text-slate-700">
+            Powered by Finnhub &amp; Yahoo Finance · No account required
+          </p>
+        </div>
+
+        {/* Stats row — outside parallax so it feels anchored */}
+        <div
+          className="absolute bottom-24 left-0 right-0 flex justify-center gap-12 border-t border-slate-800/60 pt-8"
+          style={{ transition: `transform 0.18s ease-out`, transform: `translate(${mouse.x * 0.3}px, ${mouse.y * 0.3}px)` }}
+        >
+          <StatCounter value="8,000+" label="Symbols" />
+          <StatCounter value="10"     label="Timeframes" />
+          <StatCounter value="5"      label="Alpha Signals" />
+          <StatCounter value="Free"   label="Always" />
+        </div>
       </main>
+
+      {/* ── Bottom ticker ────────────────────────────────────────────────────── */}
+      <TickerBand />
     </div>
   );
 }

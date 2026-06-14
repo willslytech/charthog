@@ -82,6 +82,12 @@
   --ring: oklch(0.72 0.155 215 / 0.5);
 }
 
+/* Ticker band infinite scroll */
+@keyframes tickerScroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
 /* Hide TradingView attribution anchor injected by lightweight-charts */
 a#tv-attr-logo {
   display: none !important;
