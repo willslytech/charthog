@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { SymbolSearch } from '@/components/SymbolSearch';
+import { RightPanel } from '@/components/RightPanel';
 import { cn } from '@/lib/utils';
 import type { CandleBar, StockQuote, Timeframe } from '@/lib/types';
 import {
@@ -140,9 +141,9 @@ export default function Home() {
   const vol = candles.reduce((s, c) => s + c.volume, 0);
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
+    <div className="flex h-screen flex-col overflow-hidden bg-background">
       {/* ── Header ── */}
-      <header className="sticky top-0 z-40 border-b border-slate-800/80 bg-background/80 backdrop-blur-md">
+      <header className="shrink-0 border-b border-slate-800/80 bg-background/80 backdrop-blur-md z-40">
         <div className="mx-auto max-w-screen-2xl px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
           {/* Logo */}
           <a href="/" className="flex items-center gap-2.5 shrink-0 group">
@@ -161,8 +162,9 @@ export default function Home() {
         </div>
       </header>
 
-      {/* ── Main ── */}
-      <main className="flex-1 mx-auto w-full max-w-screen-2xl px-4 sm:px-6 py-5 flex flex-col gap-4">
+      {/* ── Body: chart + right panel ── */}
+      <div className="flex flex-1 overflow-hidden">
+      <main className="flex-1 min-w-0 overflow-y-auto px-4 sm:px-6 py-5 flex flex-col gap-4">
 
         {/* Error banner */}
         {error && (
@@ -305,6 +307,13 @@ export default function Home() {
           {' '}· ChartHog is not financial advice · 🐷
         </p>
       </main>
+
+      {/* ── Right panel ── */}
+      <aside className="hidden lg:flex w-72 xl:w-80 shrink-0 border-l border-slate-800/80 overflow-hidden flex-col">
+        <RightPanel symbol={symbol} quote={quote} onSelectSymbol={handleSelect} />
+      </aside>
+
+      </div>
     </div>
   );
 }
