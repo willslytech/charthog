@@ -19,7 +19,7 @@ const StockChart = dynamic(
   { ssr: false, loading: () => <ChartSkeleton /> }
 );
 
-const TIMEFRAMES: Timeframe[] = ['1D', '1W', '1M', '3M', '6M', '1Y', 'ALL'];
+const TIMEFRAMES: Timeframe[] = ['30M', '1H', '4H', '1D', '1W', '1M', '3M', '6M', '1Y', 'ALL'];
 
 // ── Pig SVG logo ─────────────────────────────────────────
 function PigLogo({ size = 36 }: { size?: number }) {
@@ -86,7 +86,7 @@ const fmtVol = (n: number) => {
 export default function Home() {
   const [symbol, setSymbol] = useState('AAPL');
   const [symbolName, setSymbolName] = useState('Apple Inc.');
-  const [timeframe, setTimeframe] = useState<Timeframe>('3M');
+  const [timeframe, setTimeframe] = useState<Timeframe>('30M');
   const [candles, setCandles] = useState<CandleBar[]>([]);
   const [quote, setQuote] = useState<StockQuote | null>(null);
   const [loading, setLoading] = useState(false);

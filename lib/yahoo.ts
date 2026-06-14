@@ -3,11 +3,28 @@ import { YAHOO_TIMEFRAME_MAP } from './types';
 
 const BASE = 'https://query1.finance.yahoo.com/v8/finance/chart';
 
+function aggregateBars(bars: CandleBar[], n: number): CandleBar[] {
+  const out: CandleBar[] = [];
+  for (let i = 0; i < bars.length; i += n) {
+    const chunk = bars.slice(i, i + n);
+    if (!chunk.length) continue;
+    out.push({
+      time:   chunk[0].time,
+      open:   chunk[0].open,
+      high:   Math.max(...chunk.map(b => b.high)),
+      low:    Math.min(...chunk.map(b => b.low)),
+      close:  chunk[chunk.length - 1].close,
+      volume: chunk.reduce((s, b) => s + b.volume, 0),
+    });
+  }
+  return out;
+}
+
 export async function fetchYahooCandles(
   symbol: string,
   timeframe: Timeframe
 ): Promise<CandleBar[]> {
-  const { interval, range } = YAHOO_TIMEFRAME_MAP[timeframe];
+  const { interval, range, aggregate } = YAHOO_TIMEFRAME_MAP[timeframe];
   const url = `${BASE}/${encodeURIComponent(symbol)}?interval=${interval}&range=${range}`;
 
   const res = await fetch(url, {
@@ -46,5 +63,5 @@ export async function fetchYahooCandles(
     });
   }
 
-  return bars;
+  return aggregate && aggregate > 1 ? aggregateBars(bars, aggregate) : bars;
 }

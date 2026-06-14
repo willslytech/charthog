@@ -82,14 +82,12 @@ export function StockChart({ data, showHogIndicator = false, height = 500 }: Sto
     const ema21Series = chart.addSeries(LineSeries, {
       color: '#22d3ee',
       lineWidth: 2,
-      title: 'EMA 21',
       lastValueVisible: false,
       priceLineVisible: false,
     });
     const ema55Series = chart.addSeries(LineSeries, {
       color: '#fb923c',
       lineWidth: 2,
-      title: 'EMA 55',
       lastValueVisible: false,
       priceLineVisible: false,
     });
@@ -163,6 +161,21 @@ export function StockChart({ data, showHogIndicator = false, height = 500 }: Sto
   return (
     <div className="relative w-full">
       <div ref={containerRef} className="w-full" />
+
+      {/* Mega-Alpha legend */}
+      {showHogIndicator && (
+        <div className="absolute top-3 left-3 flex flex-col gap-1.5 bg-slate-900/85 backdrop-blur-sm rounded-lg px-3 py-2.5 pointer-events-none">
+          <div className="flex items-center gap-2">
+            <span className="w-5 h-[2px] bg-cyan-400 rounded-full inline-block" />
+            <span className="text-xs font-mono text-slate-300">EMA 21</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="w-5 h-[2px] bg-orange-400 rounded-full inline-block" />
+            <span className="text-xs font-mono text-slate-300">EMA 55</span>
+          </div>
+        </div>
+      )}
+
       {!data.length && (
         <div className="absolute inset-0 flex items-center justify-center">
           <p className="text-slate-500 text-sm font-mono">No chart data</p>
