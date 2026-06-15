@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { RefreshCw, Plus, X, ExternalLink } from 'lucide-react';
+import { RefreshCw, Plus, X, ExternalLink, BookMarked, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { StockQuote } from '@/lib/types';
+import { type SavedWatchlist, getWatchlists } from '@/lib/watchlistStore';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 type Tab = 'watchlist' | 'details' | 'news';
@@ -75,6 +76,8 @@ export function RightPanel({
   const [watchQuotes, setWatchQuotes] = useState<Record<string, WatchQuote>>({});
   const [quotesLoading, setQuotesLoading] = useState(false);
   const [addInput, setAddInput]     = useState('');
+  const [savedWatchlists, setSavedWatchlists] = useState<SavedWatchlist[]>([]);
+  const [loadMenuOpen, setLoadMenuOpen] = useState(false);
   const [news, setNews]             = useState<NewsItem[]>([]);
   const [newsLoading, setNewsLoading] = useState(false);
   const [profile, setProfile]       = useState<Profile | null>(null);
@@ -85,6 +88,7 @@ export function RightPanel({
   useEffect(() => {
     const stored = localStorage.getItem('charthog_watchlist');
     setWatchlist(stored ? JSON.parse(stored) : DEFAULT_WATCHLIST);
+    setSavedWatchlists(getWatchlists());
   }, []);
 
   useEffect(() => {
@@ -197,6 +201,37 @@ export function RightPanel({
                 <RefreshCw className={cn('h-3.5 w-3.5', quotesLoading && 'animate-spin')} />
               </button>
             </div>
+
+            {/* Load saved watchlist row */}
+            {savedWatchlists.length > 0 && (
+              <div className="relative border-b border-slate-800/50 px-2.5 py-1.5">
+                <button
+                  onClick={() => setLoadMenuOpen(v => !v)}
+                  className="flex w-full items-center gap-1.5 rounded px-1.5 py-1 text-[11px] text-slate-500 hover:text-slate-300 transition-colors"
+                >
+                  <BookMarked className="w-3 h-3" />
+                  Load saved watchlist
+                  <ChevronDown className={cn('w-3 h-3 ml-auto transition-transform', loadMenuOpen && 'rotate-180')} />
+                </button>
+                {loadMenuOpen && (
+                  <div className="absolute left-0 right-0 z-20 mx-2 mt-0.5 rounded-lg border border-slate-700/60 bg-slate-900 shadow-xl overflow-hidden">
+                    {savedWatchlists.map(wl => (
+                      <button
+                        key={wl.id}
+                        onClick={() => {
+                          setWatchlist(wl.symbols);
+                          setLoadMenuOpen(false);
+                        }}
+                        className="w-full flex items-center justify-between px-3 py-2 text-left hover:bg-slate-800/60 transition-colors"
+                      >
+                        <span className="text-[11px] text-slate-200 font-medium truncate">{wl.name}</span>
+                        <span className="text-[10px] text-slate-600 font-mono ml-2 shrink-0">{wl.symbols.length}s</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* List */}
             {watchlist.map(sym => {
