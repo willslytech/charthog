@@ -2,7 +2,10 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { Sun, Moon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTheme } from '@/components/ThemeProvider';
+import { TickerTape } from '@/components/TickerTape';
 
 function PigLogo({ size = 24 }: { size?: number }) {
   return (
@@ -27,22 +30,24 @@ const NAV_LINKS = [
   { label: 'Home',       href: '/home'      },
   { label: 'Charts',     href: '/chart'     },
   { label: 'Watchlists', href: '/watchlist' },
+  { label: 'Screener',   href: '/screener'  },
 ];
 
-// Future tabs — greyed out so users can see what's coming
-const FUTURE_LINKS = ['Screener', 'Portfolio', 'Insider', 'News'];
+const FUTURE_LINKS = ['Portfolio', 'Insider', 'News'];
 
 export function AppNav() {
   const path = usePathname();
+  const { theme, toggle } = useTheme();
 
   return (
-    <nav className="sticky top-0 z-40 h-10 border-b border-slate-800/80 bg-[#0b0f1a]/95 backdrop-blur-md flex items-center">
-      <div className="flex items-center w-full px-4 gap-0.5">
+    <nav className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-border">
+      <TickerTape />
+      <div className="h-10 flex items-center w-full px-4 gap-0.5">
 
         {/* Logo */}
         <Link
           href="/home"
-          className="flex items-center gap-1.5 mr-4 text-white font-bold text-sm shrink-0 hover:opacity-90 transition-opacity"
+          className="flex items-center gap-1.5 mr-4 font-bold text-sm shrink-0 hover:opacity-90 transition-opacity text-foreground"
         >
           <PigLogo size={22} />
           <span>Chart<span className="text-orange-400">Hog</span></span>
@@ -58,8 +63,8 @@ export function AppNav() {
               className={cn(
                 'px-3 py-1 rounded text-xs font-medium transition-colors whitespace-nowrap',
                 active
-                  ? 'bg-slate-700/70 text-white'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                  ? 'bg-primary/10 text-primary dark:bg-slate-700/70 dark:text-white'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted'
               )}
             >
               {link.label}
@@ -68,18 +73,35 @@ export function AppNav() {
         })}
 
         {/* Divider */}
-        <div className="mx-2 h-4 w-px bg-slate-700/60 shrink-0" />
+        <div className="mx-2 h-4 w-px bg-border shrink-0" />
 
         {/* Coming-soon tabs */}
         {FUTURE_LINKS.map(label => (
           <span
             key={label}
-            className="px-3 py-1 text-xs text-slate-700 cursor-not-allowed whitespace-nowrap select-none"
+            className="px-3 py-1 text-xs text-muted-foreground/40 cursor-not-allowed whitespace-nowrap select-none"
             title="Coming soon"
           >
             {label}
           </span>
         ))}
+
+        <div className="flex-1" />
+
+        {/* Light / dark toggle */}
+        <button
+          onClick={toggle}
+          aria-label="Toggle theme"
+          className={cn(
+            'flex items-center justify-center w-7 h-7 rounded-md border transition-colors',
+            'border-border text-muted-foreground hover:text-foreground hover:bg-muted'
+          )}
+        >
+          {theme === 'dark'
+            ? <Sun className="w-3.5 h-3.5" />
+            : <Moon className="w-3.5 h-3.5" />
+          }
+        </button>
       </div>
     </nav>
   );

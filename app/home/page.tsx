@@ -51,11 +51,11 @@ function Sparkline({ closes, up }: { closes: number[]; up: boolean }) {
 // ── Skeleton card ─────────────────────────────────────────────────────────────
 function CardSkeleton() {
   return (
-    <div className="animate-pulse rounded-xl border border-slate-800/80 bg-card p-4 flex flex-col gap-2">
-      <div className="h-3 w-20 rounded bg-slate-800" />
-      <div className="h-6 w-32 rounded bg-slate-800" />
-      <div className="h-3 w-24 rounded bg-slate-800" />
-      <div className="h-[72px] rounded bg-slate-800/60" />
+    <div className="animate-pulse rounded-xl border border-border dark:border-slate-800/80 bg-card p-4 flex flex-col gap-2">
+      <div className="h-3 w-20 rounded bg-muted dark:bg-slate-800" />
+      <div className="h-6 w-32 rounded bg-muted dark:bg-slate-800" />
+      <div className="h-3 w-24 rounded bg-muted dark:bg-slate-800" />
+      <div className="h-[72px] rounded bg-muted/60 dark:bg-slate-800/60" />
     </div>
   );
 }
@@ -82,18 +82,18 @@ function IndexCard({
   return (
     <Link
       href={`/chart`}
-      className="block rounded-xl border border-slate-800/80 bg-card px-4 pt-3.5 pb-2 hover:border-slate-600/80 transition-colors group"
+      className="block rounded-xl border border-border dark:border-slate-800/80 bg-card px-4 pt-3.5 pb-2 hover:border-primary/40 transition-colors group"
     >
       <div className="flex items-start justify-between mb-0.5">
         <div>
           <p className="text-[11px] font-bold tracking-wide text-slate-400 uppercase">{label}</p>
-          <p className="font-mono font-black text-xl text-white leading-tight">
+          <p className="font-mono font-black text-xl text-foreground leading-tight">
             ${fmtP(quote.c)}
           </p>
         </div>
         <span className="font-mono text-[10px] text-slate-600 pt-0.5">{sym}</span>
       </div>
-      <div className={cn('font-mono text-xs font-semibold mb-1.5 flex items-center gap-1', up ? 'text-green-400' : 'text-red-400')}>
+      <div className={cn('font-mono text-xs font-semibold mb-1.5 flex items-center gap-1', up ? 'dark:text-green-400 text-green-600' : 'dark:text-red-400 text-red-600')}>
         {up ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
         {up ? '+' : ''}{fmtP(quote.d)} &nbsp;({fmtPct(quote.dp)})
       </div>
@@ -137,7 +137,7 @@ function SectorGrid({ quotes }: { quotes: Record<string, QuoteData | null> }) {
       {SECTORS.map(({ label, sym }) => {
         const q = quotes[sym];
         if (!q) return (
-          <div key={sym} className="h-14 animate-pulse rounded-lg bg-slate-800/50 border border-slate-800/80" />
+          <div key={sym} className="h-14 animate-pulse rounded-lg bg-muted dark:bg-slate-800/50 border border-border dark:border-slate-800/80" />
         );
         const up = q.dp >= 0;
         return (
@@ -171,37 +171,37 @@ function StockTable({
   title, rows, up,
 }: { title: string; rows: StockRow[]; up: boolean }) {
   return (
-    <div className="rounded-xl border border-slate-800/80 bg-card overflow-hidden">
+    <div className="rounded-xl border border-border dark:border-slate-800/80 bg-card overflow-hidden">
       <div className={cn(
-        'flex items-center gap-2 px-4 py-2.5 border-b border-slate-800/80',
+        'flex items-center gap-2 px-4 py-2.5 border-b border-border dark:border-slate-800/80',
         up ? 'bg-green-500/8' : 'bg-red-500/8'
       )}>
         {up
           ? <TrendingUp className="w-3.5 h-3.5 text-green-400" />
           : <TrendingDown className="w-3.5 h-3.5 text-red-400" />}
-        <span className="font-mono text-xs font-bold tracking-wide uppercase text-white">{title}</span>
+        <span className="font-mono text-xs font-bold tracking-wide uppercase text-foreground">{title}</span>
       </div>
       {/* Header */}
-      <div className="grid grid-cols-4 px-4 py-1.5 border-b border-slate-800/50">
+      <div className="grid grid-cols-4 px-4 py-1.5 border-b border-border dark:border-slate-800/50">
         {['Ticker', 'Last', 'Change', 'Volume'].map(h => (
-          <span key={h} className="font-mono text-[10px] text-slate-600 uppercase tracking-wide">{h}</span>
+          <span key={h} className="font-mono text-[10px] text-muted-foreground uppercase tracking-wide">{h}</span>
         ))}
       </div>
       {/* Rows */}
       {rows.length === 0
-        ? <p className="px-4 py-6 text-center font-mono text-xs text-slate-700">Loading…</p>
+        ? <p className="px-4 py-6 text-center font-mono text-xs text-muted-foreground/40">Loading…</p>
         : rows.slice(0, 10).map(r => (
           <Link
             key={r.sym}
             href="/chart"
-            className="grid grid-cols-4 items-center px-4 py-2 border-b border-slate-800/30 last:border-0 hover:bg-slate-800/30 transition-colors group"
+            className="grid grid-cols-4 items-center px-4 py-2 border-b border-border/40 dark:border-slate-800/30 last:border-0 hover:bg-muted/50 dark:hover:bg-slate-800/30 transition-colors group"
           >
-            <span className="font-mono text-xs font-bold text-sky-400 group-hover:text-sky-300">{r.sym}</span>
-            <span className="font-mono text-xs text-slate-200">${fmtP(r.price)}</span>
-            <span className={cn('font-mono text-xs font-semibold', r.pct >= 0 ? 'text-green-400' : 'text-red-400')}>
+            <span className="font-mono text-xs font-bold text-primary group-hover:text-primary/80">{r.sym}</span>
+            <span className="font-mono text-xs text-foreground">${fmtP(r.price)}</span>
+            <span className={cn('font-mono text-xs font-semibold', r.pct >= 0 ? 'dark:text-green-400 text-green-600' : 'dark:text-red-400 text-red-600')}>
               {fmtPct(r.pct)}
             </span>
-            <span className="font-mono text-[10px] text-slate-500">—</span>
+            <span className="font-mono text-[10px] text-muted-foreground">—</span>
           </Link>
         ))
       }

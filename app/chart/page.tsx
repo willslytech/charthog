@@ -68,7 +68,7 @@ function StatPill({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center gap-1.5 text-xs font-mono">
       <span className="text-slate-500">{label}</span>
-      <span className="text-slate-200">{value}</span>
+      <span className="text-foreground">{value}</span>
     </div>
   );
 }
@@ -95,6 +95,12 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [hogIndicator, setHogIndicator] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+
+  // Read ?symbol= from URL on mount (avoids useSearchParams Suspense requirement)
+  useEffect(() => {
+    const sym = new URLSearchParams(window.location.search).get('symbol');
+    if (sym) { setSymbol(sym); setSymbolName(sym); }
+  }, []);
 
   const fetchData = useCallback(
     async (sym: string, tf: Timeframe) => {
@@ -177,7 +183,7 @@ export default function Home() {
             {/* Symbol + name */}
             <div>
               <div className="flex items-baseline gap-3">
-                <h1 className="text-2xl sm:text-3xl font-bold font-mono tracking-tight text-white">
+                <h1 className="text-2xl sm:text-3xl font-bold font-mono tracking-tight text-foreground">
                   {symbol}
                 </h1>
                 <span className="text-sm text-slate-400 hidden sm:block">{symbolName}</span>
@@ -185,13 +191,13 @@ export default function Home() {
 
               {quote ? (
                 <div className="mt-1 flex items-baseline gap-3">
-                  <span className="text-3xl sm:text-4xl font-bold font-mono text-white">
+                  <span className="text-3xl sm:text-4xl font-bold font-mono text-foreground">
                     ${fmt(quote.c)}
                   </span>
                   <span
                     className={cn(
                       'flex items-center gap-1 text-base font-mono font-semibold',
-                      isPositive ? 'text-green-400' : 'text-red-400'
+                      isPositive ? 'dark:text-green-400 text-green-600' : 'dark:text-red-400 text-red-600'
                     )}
                   >
                     {isPositive ? (
@@ -204,7 +210,7 @@ export default function Home() {
                   </span>
                 </div>
               ) : (
-                <div className="mt-2 h-10 w-48 rounded-lg bg-slate-800/60 animate-pulse" />
+                <div className="mt-2 h-10 w-48 rounded-lg bg-muted dark:bg-slate-800/60 animate-pulse" />
               )}
             </div>
 
