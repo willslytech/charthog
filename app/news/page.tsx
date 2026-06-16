@@ -363,7 +363,7 @@ export default function NewsPage() {
         <TwoColumnView articles={articles} hidden={hidden} leftLabel="Market Beat" rightLabel="M&A News" />
       ) : (
         <div className="max-w-5xl">
-          {visible.map(a => <TaggedRow key={a.id} a={a} pool={CHIP_MAP[tab]} />)}
+          {visible.map(a => <TaggedRow key={a.id} a={a} pool={CHIP_POOL[tab]} />)}
         </div>
       )}
 
