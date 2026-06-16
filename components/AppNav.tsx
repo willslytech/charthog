@@ -31,11 +31,14 @@ const NAV_LINKS = [
   { label: 'Charts',     href: '/chart'     },
   { label: 'Watchlists', href: '/watchlist' },
   { label: 'Screener',   href: '/screener'  },
+  { label: 'Heatmap',   href: '/heatmap'   },
   { label: 'Insider',    href: '/insider'   },
   { label: 'News',       href: '/news'      },
+  { label: 'Calendar',   href: '/calendar'  },
+  { label: 'Portfolio',  href: '/portfolio' },
 ];
 
-const FUTURE_LINKS = ['Portfolio'];
+const FUTURE_LINKS: string[] = [];
 
 export function AppNav() {
   const path = usePathname();
@@ -73,20 +76,6 @@ export function AppNav() {
             </Link>
           );
         })}
-
-        {/* Divider */}
-        <div className="mx-2 h-4 w-px bg-border shrink-0" />
-
-        {/* Coming-soon tabs */}
-        {FUTURE_LINKS.map(label => (
-          <span
-            key={label}
-            className="px-3 py-1 text-xs text-muted-foreground/40 cursor-not-allowed whitespace-nowrap select-none"
-            title="Coming soon"
-          >
-            {label}
-          </span>
-        ))}
 
         <div className="flex-1" />
 
