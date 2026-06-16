@@ -32,9 +32,10 @@ const NAV_LINKS = [
   { label: 'Watchlists', href: '/watchlist' },
   { label: 'Screener',   href: '/screener'  },
   { label: 'Insider',    href: '/insider'   },
+  { label: 'News',       href: '/news'      },
 ];
 
-const FUTURE_LINKS = ['Portfolio', 'News'];
+const FUTURE_LINKS = ['Portfolio'];
 
 export function AppNav() {
   const path = usePathname();
