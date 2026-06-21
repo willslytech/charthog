@@ -261,7 +261,7 @@ export default function Home() {
 
         {/* ── Chart ── */}
         <div className="rounded-2xl border border-border bg-card p-2 sm:p-3 overflow-hidden">
-          <StockChart data={candles} showHogIndicator={hogIndicator} height={500} isDark={theme === 'dark'} />
+          <StockChart data={candles} showHogIndicator={hogIndicator} height={440} isDark={theme === 'dark'} />
         </div>
 
         {/* ── Footer hint ── */}
