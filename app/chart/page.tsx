@@ -15,7 +15,9 @@ import {
   RefreshCw,
   AlertCircle,
   BarChart2,
+  Download,
 } from 'lucide-react';
+import type { StockChartHandle } from '@/components/StockChart';
 
 // Dynamic import keeps lightweight-charts out of the SSR bundle
 const StockChart = dynamic(
@@ -75,6 +77,7 @@ export default function Home() {
   const [hogIndicator, setHogIndicator] = useState(false);
   const [livePrice, setLivePrice] = useState<number | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const stockChartRef = useRef<StockChartHandle | null>(null);
 
   // Read ?symbol= from URL on mount (avoids useSearchParams Suspense requirement)
   useEffect(() => {
@@ -283,8 +286,16 @@ export default function Home() {
         </div>
 
         {/* ── Chart ── */}
-        <div className="rounded-2xl border border-border bg-card p-2 sm:p-3 overflow-hidden">
-          <StockChart data={candles} showHogIndicator={hogIndicator} height={560} isDark={theme === 'dark'} />
+        <div className="relative rounded-2xl border border-border bg-card p-2 sm:p-3 overflow-hidden">
+          <StockChart ref={stockChartRef} data={candles} showHogIndicator={hogIndicator} height={560} isDark={theme === 'dark'} />
+          <button
+            onClick={() => stockChartRef.current?.saveChart(`${symbol}_${TF_LABELS[timeframe]}`)}
+            className="absolute bottom-3 right-3 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border border-border bg-card/80 backdrop-blur-sm text-muted-foreground hover:text-foreground hover:border-border/80 transition-all duration-150"
+            title="Save chart as PNG"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Save chart</span>
+          </button>
         </div>
 
         {/* ── Footer hint ── */}

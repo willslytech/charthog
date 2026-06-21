@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import {
   createChart,
   createSeriesMarkers,
@@ -81,7 +81,12 @@ interface StockChartProps {
   isDark?: boolean;
 }
 
-export function StockChart({ data, showHogIndicator = false, height = 500, isDark = true }: StockChartProps) {
+export interface StockChartHandle {
+  saveChart: (filename?: string) => void;
+}
+
+export const StockChart = forwardRef<StockChartHandle, StockChartProps>(
+function StockChart({ data, showHogIndicator = false, height = 500, isDark = true }, ref) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef     = useRef<IChartApi | null>(null);
   const candleRef    = useRef<ISeriesApi<'Candlestick'> | null>(null);
@@ -93,6 +98,17 @@ export function StockChart({ data, showHogIndicator = false, height = 500, isDar
   const rsiRef       = useRef<ISeriesApi<'Line'> | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const markersRef   = useRef<any>(null);
+
+  useImperativeHandle(ref, () => ({
+    saveChart(filename = 'chart') {
+      const canvas = chartRef.current?.takeScreenshot();
+      if (!canvas) return;
+      const a = document.createElement('a');
+      a.href = canvas.toDataURL('image/png');
+      a.download = `${filename}.png`;
+      a.click();
+    },
+  }));
 
   // ── Initialize chart once ────────────────────────────────────────────────
   useEffect(() => {
@@ -343,4 +359,5 @@ export function StockChart({ data, showHogIndicator = false, height = 500, isDar
       )}
     </div>
   );
-}
+});
+StockChart.displayName = 'StockChart';

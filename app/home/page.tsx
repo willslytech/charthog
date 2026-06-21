@@ -67,9 +67,7 @@ function IndexCard({ label, sym, sub, quote, closes }: {
   if (!quote) return <CardSkeleton />;
   const up = quote.dp >= 0;
   return (
-    <Link href="/chart"
-      className="block rounded-xl border border-border bg-card px-4 pt-3.5 pb-2 hover:border-primary/40 transition-colors group"
-    >
+    <div className="rounded-xl border border-border bg-card px-4 pt-3.5 pb-2">
       <div className="flex items-start justify-between mb-0.5">
         <div>
           <p className="text-[11px] font-bold tracking-wide text-muted-foreground uppercase">{label}</p>
@@ -88,7 +86,7 @@ function IndexCard({ label, sym, sub, quote, closes }: {
         <span>{sub}</span>
         <span>L {fmtP(quote.l)}</span>
       </div>
-    </Link>
+    </div>
   );
 }
 
