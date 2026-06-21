@@ -23,7 +23,13 @@ const StockChart = dynamic(
   { ssr: false, loading: () => <ChartSkeleton /> }
 );
 
-const TIMEFRAMES: Timeframe[] = ['30M', '1H', '4H', '1D', '1W', '1M', '3M', '6M', '1Y', 'ALL'];
+const TIMEFRAMES: Timeframe[] = ['3min', '5min', '15min', '30M', '1H', '4H', '1D', '1W', '1M', '3M', '6M', '1Y', 'ALL'];
+
+const TF_LABELS: Record<Timeframe, string> = {
+  '3min': '3m', '5min': '5m', '15min': '15m', '30M': '30m',
+  '1H': '1h', '4H': '4h', '1D': '1D', '1W': '1W',
+  '1M': '1M', '3M': '3M', '6M': '6M', '1Y': '1Y', 'ALL': 'ALL',
+};
 
 
 // ── Loading skeleton ──────────────────────────────────────
@@ -231,7 +237,7 @@ export default function Home() {
                     : 'text-muted-foreground hover:text-foreground hover:bg-background'
                 )}
               >
-                {tf}
+                {TF_LABELS[tf]}
               </button>
             ))}
           </div>
@@ -278,7 +284,7 @@ export default function Home() {
 
         {/* ── Chart ── */}
         <div className="rounded-2xl border border-border bg-card p-2 sm:p-3 overflow-hidden">
-          <StockChart data={candles} showHogIndicator={hogIndicator} height={440} isDark={theme === 'dark'} />
+          <StockChart data={candles} showHogIndicator={hogIndicator} height={500} isDark={theme === 'dark'} />
         </div>
 
         {/* ── Footer hint ── */}

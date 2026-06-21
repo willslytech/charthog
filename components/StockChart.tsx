@@ -13,12 +13,12 @@ import {
 import type { IChartApi, ISeriesApi, UTCTimestamp } from 'lightweight-charts';
 import type { CandleBar } from '@/lib/types';
 import { computeMegaAlpha } from '@/lib/megaAlpha';
-import { computeSqueezeMomentum } from '@/lib/squeezeMomentum';
 
 const BULL         = '#22c55e';
 const BEAR         = '#ef4444';
 const ACCENT       = '#38bdf8';
 const EMA200_COLOR = '#a855f7';
+const VWAP_COLOR   = '#f59e0b';
 
 function chartTextColor(isDark: boolean) {
   return isDark ? '#94a3b8' : '#1d4ed8';
@@ -36,6 +36,22 @@ function computeEmaValues(closes: number[], period: number): number[] {
   return out;
 }
 
+function computeVWAP(data: CandleBar[]): { time: number; value: number }[] {
+  const result: { time: number; value: number }[] = [];
+  let cumTPV = 0;
+  let cumVol = 0;
+  let prevDate = '';
+  for (const bar of data) {
+    const date = new Date(bar.time * 1000).toISOString().slice(0, 10);
+    if (date !== prevDate) { cumTPV = 0; cumVol = 0; prevDate = date; }
+    const tp = (bar.high + bar.low + bar.close) / 3;
+    cumTPV += tp * bar.volume;
+    cumVol += bar.volume;
+    if (cumVol > 0) result.push({ time: bar.time, value: cumTPV / cumVol });
+  }
+  return result;
+}
+
 interface StockChartProps {
   data: CandleBar[];
   showHogIndicator?: boolean;
@@ -51,11 +67,9 @@ export function StockChart({ data, showHogIndicator = false, height = 500, isDar
   const ema200Ref    = useRef<ISeriesApi<'Line'> | null>(null);
   const ema21Ref     = useRef<ISeriesApi<'Line'> | null>(null);
   const ema55Ref     = useRef<ISeriesApi<'Line'> | null>(null);
-  const sqzHistRef   = useRef<ISeriesApi<'Histogram'> | null>(null);
+  const vwapRef      = useRef<ISeriesApi<'Line'> | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const markersRef   = useRef<any>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const sqzDotsRef   = useRef<any>(null);
 
   // ── Initialize chart once ────────────────────────────────────────────────
   useEffect(() => {
@@ -66,7 +80,7 @@ export function StockChart({ data, showHogIndicator = false, height = 500, isDar
         background: { type: ColorType.Solid, color: 'transparent' },
         textColor: chartTextColor(isDark),
         fontSize: 11,
-        fontFamily: "'Geist Mono', 'JetBrains Mono', monospace",
+        fontFamily: "'Roboto Mono', monospace",
       },
       grid: {
         vertLines: { color: 'rgba(148,163,184,0.06)' },
@@ -103,19 +117,19 @@ export function StockChart({ data, showHogIndicator = false, height = 500, isDar
     });
     chart.priceScale('vol').applyOptions({ scaleMargins: { top: 0.88, bottom: 0 } });
 
-    // ── Squeeze Momentum (above volume, ~20% height) ─────────────────────────
-    const sqzSeries = chart.addSeries(HistogramSeries, {
-      priceScaleId: 'sqz',
-      lastValueVisible: false,
-      priceLineVisible: false,
-    });
-    chart.priceScale('sqz').applyOptions({ scaleMargins: { top: 0.68, bottom: 0.12 } });
-    sqzDotsRef.current = createSeriesMarkers(sqzSeries, []);
-
     // ── EMA 200 — always visible ─────────────────────────────────────────────
     const ema200Series = chart.addSeries(LineSeries, {
       color: EMA200_COLOR,
       lineWidth: 2,
+      lastValueVisible: false,
+      priceLineVisible: false,
+    });
+
+    // ── VWAP — session-resetting, always visible ──────────────────────────────
+    const vwapSeries = chart.addSeries(LineSeries, {
+      color: VWAP_COLOR,
+      lineWidth: 2,
+      lineStyle: 1, // dashed
       lastValueVisible: false,
       priceLineVisible: false,
     });
@@ -136,13 +150,13 @@ export function StockChart({ data, showHogIndicator = false, height = 500, isDar
 
     markersRef.current = createSeriesMarkers(candleSeries, []);
 
-    chartRef.current   = chart;
-    candleRef.current  = candleSeries;
-    volumeRef.current  = volumeSeries;
-    sqzHistRef.current = sqzSeries;
-    ema200Ref.current  = ema200Series;
-    ema21Ref.current   = ema21Series;
-    ema55Ref.current   = ema55Series;
+    chartRef.current  = chart;
+    candleRef.current = candleSeries;
+    volumeRef.current = volumeSeries;
+    ema200Ref.current = ema200Series;
+    vwapRef.current   = vwapSeries;
+    ema21Ref.current  = ema21Series;
+    ema55Ref.current  = ema55Series;
 
     const ro = new ResizeObserver(() => {
       if (!containerRef.current) return;
@@ -154,8 +168,8 @@ export function StockChart({ data, showHogIndicator = false, height = 500, isDar
       ro.disconnect();
       chart.remove();
       chartRef.current = candleRef.current = volumeRef.current = null;
-      sqzHistRef.current = ema200Ref.current = null;
-      ema21Ref.current = ema55Ref.current = markersRef.current = sqzDotsRef.current = null;
+      ema200Ref.current = vwapRef.current = null;
+      ema21Ref.current = ema55Ref.current = markersRef.current = null;
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [height]);
@@ -168,7 +182,7 @@ export function StockChart({ data, showHogIndicator = false, height = 500, isDar
     });
   }, [isDark]);
 
-  // ── Update candle, volume, EMA 200, and SQZ data ─────────────────────────
+  // ── Update candle, volume, EMA 200, and VWAP data ────────────────────────
   useEffect(() => {
     if (!candleRef.current || !volumeRef.current || !data.length) return;
 
@@ -198,21 +212,11 @@ export function StockChart({ data, showHogIndicator = false, height = 500, isDar
       );
     }
 
-    // Squeeze Momentum histogram + dots
-    if (sqzHistRef.current && sqzDotsRef.current) {
-      const sqzData = computeSqueezeMomentum(data);
-      sqzHistRef.current.setData(
-        sqzData.map(b => ({ time: b.time as UTCTimestamp, value: b.value, color: b.barColor }))
-      );
-      sqzDotsRef.current.setMarkers(
-        sqzData.map(b => ({
-          time:     b.time as UTCTimestamp,
-          position: b.value >= 0 ? ('belowBar' as const) : ('aboveBar' as const),
-          color:    b.dotColor,
-          shape:    'circle' as const,
-          size:     0.5,
-          text:     '',
-        }))
+    // VWAP — session-resetting
+    if (vwapRef.current) {
+      const vwapData = computeVWAP(data);
+      vwapRef.current.setData(
+        vwapData.map(d => ({ time: d.time as UTCTimestamp, value: d.value }))
       );
     }
 
@@ -266,31 +270,10 @@ export function StockChart({ data, showHogIndicator = false, height = 500, isDar
             </>
           )}
 
-          {/* SQZ Momentum */}
+          {/* VWAP */}
           <div className="flex items-center gap-2 mt-0.5 pt-1 border-t border-slate-700/50">
-            <span className="flex gap-[2px]">
-              <span className="w-[5px] h-3 rounded-sm inline-block" style={{ background: '#00FF00' }} />
-              <span className="w-[5px] h-3 rounded-sm inline-block" style={{ background: '#008000' }} />
-              <span className="w-[5px] h-3 rounded-sm inline-block" style={{ background: '#FF0000' }} />
-              <span className="w-[5px] h-3 rounded-sm inline-block" style={{ background: '#8B0000' }} />
-            </span>
-            <span className="text-xs font-mono text-slate-300">SQZ Mom</span>
-          </div>
-
-          {/* Dot legend */}
-          <div className="flex items-center gap-3 text-[10px] font-mono text-slate-500">
-            <span className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full inline-block" style={{ background: '#111111', border: '1px solid #555' }} />
-              On
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full inline-block bg-[#888888]" />
-              Off
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full inline-block bg-[#4488FF]" />
-              No sqz
-            </span>
+            <span className="w-5 h-[2px] rounded-full inline-block" style={{ background: VWAP_COLOR, borderTop: `2px dashed ${VWAP_COLOR}`, height: 0 }} />
+            <span className="text-xs font-mono text-slate-300">VWAP</span>
           </div>
         </div>
       )}

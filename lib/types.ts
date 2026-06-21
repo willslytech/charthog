@@ -25,7 +25,7 @@ export interface SearchResult {
   type: string;
 }
 
-export type Timeframe = '30M' | '1H' | '4H' | '1D' | '1W' | '1M' | '3M' | '6M' | '1Y' | 'ALL';
+export type Timeframe = '3min' | '5min' | '15min' | '30M' | '1H' | '4H' | '1D' | '1W' | '1M' | '3M' | '6M' | '1Y' | 'ALL';
 
 export interface YahooTimeframeConfig {
   interval: string;
@@ -34,14 +34,17 @@ export interface YahooTimeframeConfig {
 }
 
 export const YAHOO_TIMEFRAME_MAP: Record<Timeframe, YahooTimeframeConfig> = {
-  '30M': { interval: '30m', range: '5d' },
-  '1H':  { interval: '60m', range: '1mo' },
-  '4H':  { interval: '1h',  range: '6mo', aggregate: 4 },
-  '1D':  { interval: '5m',  range: '1d' },
-  '1W':  { interval: '15m', range: '5d' },
-  '1M':  { interval: '60m', range: '1mo' },
-  '3M':  { interval: '1d',  range: '3mo' },
-  '6M':  { interval: '1d',  range: '6mo' },
-  '1Y':  { interval: '1wk', range: '1y' },
-  'ALL': { interval: '1mo', range: 'max' },
+  '3min': { interval: '1m',  range: '1d',  aggregate: 3 },
+  '5min': { interval: '5m',  range: '5d' },
+  '15min':{ interval: '15m', range: '30d' },
+  '30M':  { interval: '30m', range: '5d' },
+  '1H':   { interval: '60m', range: '1mo' },
+  '4H':   { interval: '1h',  range: '6mo', aggregate: 4 },
+  '1D':   { interval: '5m',  range: '1d' },
+  '1W':   { interval: '15m', range: '5d' },
+  '1M':   { interval: '60m', range: '1mo' },
+  '3M':   { interval: '1d',  range: '3mo' },
+  '6M':   { interval: '1d',  range: '6mo' },
+  '1Y':   { interval: '1wk', range: '1y' },
+  'ALL':  { interval: '1mo', range: 'max' },
 };
