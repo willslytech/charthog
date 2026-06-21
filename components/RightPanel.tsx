@@ -5,6 +5,7 @@ import { RefreshCw, Plus, X, ExternalLink, BookMarked, ChevronDown } from 'lucid
 import { cn } from '@/lib/utils';
 import type { StockQuote } from '@/lib/types';
 import { type SavedWatchlist, getWatchlists } from '@/lib/watchlistStore';
+import { getFinnhubWS } from '@/lib/finnhubWS';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 type Tab = 'watchlist' | 'details' | 'news';
@@ -75,6 +76,7 @@ export function RightPanel({
   const [watchlist, setWatchlist]   = useState<string[]>([]);
   const [watchQuotes, setWatchQuotes] = useState<Record<string, WatchQuote>>({});
   const [quotesLoading, setQuotesLoading] = useState(false);
+  const [isLive, setIsLive]         = useState(false);
   const [addInput, setAddInput]     = useState('');
   const [savedWatchlists, setSavedWatchlists] = useState<SavedWatchlist[]>([]);
   const [loadMenuOpen, setLoadMenuOpen] = useState(false);
@@ -83,6 +85,7 @@ export function RightPanel({
   const [profile, setProfile]       = useState<Profile | null>(null);
   const [profileLoading, setProfileLoading] = useState(false);
   const cancelRef = useRef(false);
+  const prevClosesRef = useRef<Record<string, number>>({});
 
   // ── Watchlist — persist to localStorage ──────────────────────────────────
   useEffect(() => {
@@ -95,7 +98,7 @@ export function RightPanel({
     if (watchlist.length) localStorage.setItem('charthog_watchlist', JSON.stringify(watchlist));
   }, [watchlist]);
 
-  // ── Fetch quotes for all watchlist symbols ────────────────────────────────
+  // ── Fetch initial quotes for prevClose + baseline prices ─────────────────
   const refreshQuotes = async (list: string[]) => {
     cancelRef.current = false;
     setQuotesLoading(true);
@@ -106,6 +109,7 @@ export function RightPanel({
         if (res.ok) {
           const q = await res.json();
           if (!q.error) {
+            prevClosesRef.current[sym] = q.pc;
             setWatchQuotes(prev => ({ ...prev, [sym]: { price: q.c, pct: q.dp } }));
           }
         }
@@ -119,6 +123,24 @@ export function RightPanel({
     if (!watchlist.length) return;
     refreshQuotes(watchlist);
     return () => { cancelRef.current = true; };
+  }, [watchlist]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── WebSocket real-time price updates ────────────────────────────────────
+  useEffect(() => {
+    const ws = getFinnhubWS();
+    if (!ws || !watchlist.length) return;
+
+    const unsubs = watchlist.map(sym =>
+      ws.subscribe(sym, (symbol, price) => {
+        const pc = prevClosesRef.current[symbol];
+        if (pc === undefined) return;
+        const pct = ((price - pc) / pc) * 100;
+        setIsLive(true);
+        setWatchQuotes(prev => ({ ...prev, [symbol]: { price, pct } }));
+      })
+    );
+
+    return () => { unsubs.forEach(fn => fn()); };
   }, [watchlist]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Fetch news ────────────────────────────────────────────────────────────
@@ -195,10 +217,13 @@ export function RightPanel({
               <button
                 onClick={() => refreshQuotes(watchlist)}
                 disabled={quotesLoading}
-                title="Refresh prices"
-                className="rounded-lg border border-border bg-muted px-2 py-1.5 text-muted-foreground hover:border-border/80 hover:text-foreground transition-colors disabled:opacity-40"
+                title={isLive ? 'Live via WebSocket' : 'Refresh prices'}
+                className="relative rounded-lg border border-border bg-muted px-2 py-1.5 text-muted-foreground hover:border-border/80 hover:text-foreground transition-colors disabled:opacity-40"
               >
                 <RefreshCw className={cn('h-3.5 w-3.5', quotesLoading && 'animate-spin')} />
+                {isLive && (
+                  <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-green-400 animate-pulse" />
+                )}
               </button>
             </div>
 

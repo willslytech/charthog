@@ -8,6 +8,7 @@ import { AppNav } from '@/components/AppNav';
 import { cn } from '@/lib/utils';
 import { useTheme } from '@/components/ThemeProvider';
 import type { CandleBar, StockQuote, Timeframe } from '@/lib/types';
+import { getFinnhubWS } from '@/lib/finnhubWS';
 import {
   TrendingUp,
   TrendingDown,
@@ -66,6 +67,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hogIndicator, setHogIndicator] = useState(false);
+  const [livePrice, setLivePrice] = useState<number | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   // Read ?symbol= from URL on mount (avoids useSearchParams Suspense requirement)
@@ -110,12 +112,24 @@ export default function Home() {
     fetchData(symbol, timeframe);
   }, [symbol, timeframe, fetchData]);
 
+  // ── WebSocket: live price for active symbol ───────────────────────────────
+  useEffect(() => {
+    const ws = getFinnhubWS();
+    if (!ws) return;
+    setLivePrice(null);
+    const unsub = ws.subscribe(symbol, (_, price) => setLivePrice(price));
+    return unsub;
+  }, [symbol]);
+
   const handleSelect = (sym: string, desc: string) => {
     setSymbol(sym);
     setSymbolName(desc);
   };
 
-  const isPositive = quote ? quote.dp >= 0 : true;
+  const displayPrice = livePrice ?? quote?.c ?? 0;
+  const displayDelta = quote ? (livePrice != null ? livePrice - quote.pc : quote.d) : 0;
+  const displayDeltaPct = quote ? (livePrice != null ? ((livePrice - quote.pc) / quote.pc) * 100 : quote.dp) : 0;
+  const isPositive = displayDelta >= 0;
   const lastCandle = candles[candles.length - 1];
   const vol = candles.reduce((s, c) => s + c.volume, 0);
 
@@ -164,7 +178,10 @@ export default function Home() {
               {quote ? (
                 <div className="mt-1 flex items-baseline gap-3">
                   <span className="text-3xl sm:text-4xl font-bold font-mono text-foreground">
-                    ${fmt(quote.c)}
+                    ${fmt(displayPrice)}
+                    {livePrice != null && (
+                      <span className="ml-2 inline-block h-2 w-2 rounded-full bg-green-400 animate-pulse align-middle" title="Live" />
+                    )}
                   </span>
                   <span
                     className={cn(
@@ -178,7 +195,7 @@ export default function Home() {
                       <TrendingDown className="w-4 h-4" />
                     )}
                     {isPositive ? '+' : ''}
-                    {fmt(quote.d)} ({isPositive ? '+' : ''}{fmt(quote.dp)}%)
+                    {fmt(displayDelta)} ({isPositive ? '+' : ''}{fmt(displayDeltaPct)}%)
                   </span>
                 </div>
               ) : (
