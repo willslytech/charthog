@@ -20,6 +20,22 @@ interface Profile {
 
 const DEFAULT_WATCHLIST = ['AAPL', 'TSLA', 'NVDA', 'MSFT', 'AMZN', 'META', 'SPY', 'QQQ', 'GS', 'JPM'];
 
+const AI_STOCKS = [
+  'AAPL','ACLS','ADI','AGX','ALAB','ALGM','AMAT','AMD','AMKR','AMZN',
+  'APH','APLD','APP','ARM','ASTS','ASX','AVGO','AXTI','BAC','BE',
+  'BEAM','BLLN','C','CAMT','CAT','CDNS','CECO','CEG','CIFR','COHR',
+  'COMP','CPA','CRDO','CRWV','CSCO','DAVE','DIOD','ELAN','ENTG','EWTX',
+  'FCEL','FLEX','FLNC','FRO','GE','GEV','GFS','GLW','GOOGL','HIMS',
+  'HOOD','HPE','HRI','HUT','IBM','IMVT','INTC','IONQ','IREN','IWM',
+  'JBLU','JPM','KEEL','LION','LITE','LRCX','LSCC','MCHP','META','MRVL',
+  'MRX','MSFT','MTN','MTSI','MU','MYRG','NBIS','NET','NOKIA','NOW',
+  'NTLA','NVT','OKLO','ON','OUST','PII','PLTR','POWI','Q','QCOM',
+  'RKLB','RL','RMBS','ROG','ROKU','RSI','RVMD','SITM','SMCI','SMH',
+  'SMR','SMTC','SN','SNDK','SNOW','SPHR','SPXC','SXI','SYNA','TCEHY',
+  'TE','TER','TLN','TSEM','TSLA','TSM','TTMI','TXN','UPST','VRT',
+  'VST','W','WBI','WDC','WOLF','WRBY','YETI',
+];
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const fmtP = (n: number) =>
   n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -94,6 +110,15 @@ export function RightPanel({
   useEffect(() => {
     const stored = localStorage.getItem('charthog_watchlist');
     setWatchlist(stored ? JSON.parse(stored) : DEFAULT_WATCHLIST);
+
+    // Seed "AI Stocks" saved watchlist if not already present
+    const existing = getWatchlists();
+    if (!existing.some(w => w.name === 'AI Stocks')) {
+      saveWatchlists([
+        { id: 'ai-stocks-seed', name: 'AI Stocks', symbols: AI_STOCKS, createdAt: 0 },
+        ...existing,
+      ]);
+    }
     setSavedWatchlists(getWatchlists());
   }, []);
 
