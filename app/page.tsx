@@ -4,25 +4,6 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { LandingCanvas } from '@/components/LandingCanvas';
 
-// ── Pig mascot ────────────────────────────────────────────────────────────────
-function PigLogo({ size = 40 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <ellipse cx="9"  cy="14" rx="7" ry="7" fill="#fb923c" />
-      <ellipse cx="31" cy="14" rx="7" ry="7" fill="#fb923c" />
-      <ellipse cx="9"  cy="14" rx="4" ry="4" fill="#fde68a" />
-      <ellipse cx="31" cy="14" rx="4" ry="4" fill="#fde68a" />
-      <circle cx="20" cy="23" r="16" fill="#fb923c" />
-      <circle cx="14" cy="20" r="2.5" fill="#fff" />
-      <circle cx="26" cy="20" r="2.5" fill="#fff" />
-      <circle cx="14.8" cy="20.8" r="1.3" fill="#0f172a" />
-      <circle cx="26.8" cy="20.8" r="1.3" fill="#0f172a" />
-      <ellipse cx="20" cy="28" rx="7" ry="5" fill="#fcd5a0" />
-      <circle cx="17" cy="28.5" r="1.6" fill="#c2410c" />
-      <circle cx="23" cy="28.5" r="1.6" fill="#c2410c" />
-    </svg>
-  );
-}
 
 // ── Bottom ticker band ────────────────────────────────────────────────────────
 const TICKERS = [
@@ -135,9 +116,8 @@ export default function LandingPage() {
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <header className="fixed left-0 right-0 top-0 z-40 flex items-center justify-between px-6 py-4">
         <div className="flex items-center gap-2.5">
-          <PigLogo size={30} />
-          <span className="text-lg font-bold tracking-tight">
-            Chart<span className="text-orange-400">Hog</span>
+          <span className="text-lg font-bold tracking-tight text-white">
+            The Stock Trading Edge
           </span>
         </div>
         <Link href="/home">
@@ -165,30 +145,16 @@ export default function LandingPage() {
             LIVE · NYSE · NASDAQ · 8,000+ SYMBOLS
           </div>
 
-          {/* Pig */}
-          <div
-            className="mb-6 flex justify-center"
-            style={{ filter: 'drop-shadow(0 0 40px rgba(251,146,60,0.55))' }}
-          >
-            <PigLogo size={96} />
-          </div>
-
           {/* Title */}
           <h1
-            className="mb-3 font-black leading-none tracking-tight"
-            style={{ fontSize: 'clamp(4rem, 12vw, 9rem)', textShadow: '0 0 80px rgba(255,255,255,0.1)' }}
+            className="mb-3 font-black leading-none tracking-tight text-white"
+            style={{ fontSize: 'clamp(2.8rem, 8vw, 7rem)', textShadow: '0 0 80px rgba(255,255,255,0.15)' }}
           >
-            Chart
-            <span
-              className="text-orange-400"
-              style={{ textShadow: '0 0 60px rgba(251,146,60,0.65), 0 0 120px rgba(251,146,60,0.25)' }}
-            >
-              Hog
-            </span>
+            The Stock Trading Edge
           </h1>
 
           <p className="mb-2 text-xl font-light tracking-wide text-slate-300 sm:text-2xl">
-            The Stock Trader&apos;s Edge
+            NYSE · NASDAQ · 8,000+ Symbols
           </p>
           <p className="mb-10 font-mono text-xs uppercase tracking-[0.22em] text-slate-600">
             Real‑time data · Mega‑Alpha signals · Zero cost

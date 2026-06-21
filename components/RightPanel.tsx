@@ -43,8 +43,8 @@ function TabBtn({ active, onClick, children }: { active: boolean; onClick: () =>
       className={cn(
         'flex-1 py-2.5 text-[11px] font-mono font-semibold tracking-wide uppercase transition-colors',
         active
-          ? 'text-sky-400 border-b-2 border-sky-400 -mb-px'
-          : 'text-slate-500 hover:text-slate-300'
+          ? 'text-sky-500 border-b-2 border-sky-500 -mb-px'
+          : 'text-muted-foreground hover:text-foreground'
       )}
     >
       {children}
@@ -54,9 +54,9 @@ function TabBtn({ active, onClick, children }: { active: boolean; onClick: () =>
 
 function DetailRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between py-2 border-b border-slate-800/40 last:border-0">
-      <span className="text-[11px] text-slate-500 font-mono">{label}</span>
-      <span className="text-[11px] text-slate-200 font-mono font-medium text-right max-w-[55%] truncate">{value}</span>
+    <div className="flex items-center justify-between py-2 border-b border-border/40 last:border-0">
+      <span className="text-[11px] text-muted-foreground font-mono">{label}</span>
+      <span className="text-[11px] text-foreground font-mono font-medium text-right max-w-[55%] truncate">{value}</span>
     </div>
   );
 }
@@ -163,7 +163,7 @@ export function RightPanel({
     <div className="flex h-full flex-col bg-background">
 
       {/* ── Tabs ── */}
-      <div className="flex shrink-0 border-b border-slate-800/80">
+      <div className="flex shrink-0 border-b border-border">
         <TabBtn active={tab === 'watchlist'} onClick={() => setTab('watchlist')}>Watch</TabBtn>
         <TabBtn active={tab === 'details'}   onClick={() => setTab('details')}>Details</TabBtn>
         <TabBtn active={tab === 'news'}      onClick={() => setTab('news')}>News</TabBtn>
@@ -176,19 +176,19 @@ export function RightPanel({
         {tab === 'watchlist' && (
           <div className="flex flex-col">
             {/* Add + refresh row */}
-            <div className="flex gap-2 border-b border-slate-800/50 p-2.5">
+            <div className="flex gap-2 border-b border-border/50 p-2.5">
               <input
                 value={addInput}
                 onChange={e => setAddInput(e.target.value.toUpperCase())}
                 onKeyDown={e => e.key === 'Enter' && addSymbol()}
                 placeholder="Add ticker…"
                 maxLength={10}
-                className="min-w-0 flex-1 rounded-lg border border-slate-700/50 bg-slate-800/50 px-2.5 py-1.5 font-mono text-xs text-white placeholder:text-slate-600 focus:border-sky-500/60 focus:outline-none"
+                className="min-w-0 flex-1 rounded-lg border border-border bg-muted px-2.5 py-1.5 font-mono text-xs text-foreground placeholder:text-muted-foreground focus:border-sky-500/60 focus:outline-none"
               />
               <button
                 onClick={addSymbol}
                 title="Add"
-                className="rounded-lg border border-slate-700/50 bg-slate-800/50 px-2 py-1.5 text-slate-400 hover:border-sky-500/50 hover:text-sky-400 transition-colors"
+                className="rounded-lg border border-border bg-muted px-2 py-1.5 text-muted-foreground hover:border-sky-500/50 hover:text-sky-500 transition-colors"
               >
                 <Plus className="h-3.5 w-3.5" />
               </button>
@@ -196,7 +196,7 @@ export function RightPanel({
                 onClick={() => refreshQuotes(watchlist)}
                 disabled={quotesLoading}
                 title="Refresh prices"
-                className="rounded-lg border border-slate-700/50 bg-slate-800/50 px-2 py-1.5 text-slate-400 hover:border-slate-500 hover:text-slate-200 transition-colors disabled:opacity-40"
+                className="rounded-lg border border-border bg-muted px-2 py-1.5 text-muted-foreground hover:border-border/80 hover:text-foreground transition-colors disabled:opacity-40"
               >
                 <RefreshCw className={cn('h-3.5 w-3.5', quotesLoading && 'animate-spin')} />
               </button>
@@ -204,17 +204,17 @@ export function RightPanel({
 
             {/* Load saved watchlist row */}
             {savedWatchlists.length > 0 && (
-              <div className="relative border-b border-slate-800/50 px-2.5 py-1.5">
+              <div className="relative border-b border-border/50 px-2.5 py-1.5">
                 <button
                   onClick={() => setLoadMenuOpen(v => !v)}
-                  className="flex w-full items-center gap-1.5 rounded px-1.5 py-1 text-[11px] text-slate-500 hover:text-slate-300 transition-colors"
+                  className="flex w-full items-center gap-1.5 rounded px-1.5 py-1 text-[11px] text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <BookMarked className="w-3 h-3" />
                   Load saved watchlist
                   <ChevronDown className={cn('w-3 h-3 ml-auto transition-transform', loadMenuOpen && 'rotate-180')} />
                 </button>
                 {loadMenuOpen && (
-                  <div className="absolute left-0 right-0 z-20 mx-2 mt-0.5 rounded-lg border border-slate-700/60 bg-slate-900 shadow-xl overflow-hidden">
+                  <div className="absolute left-0 right-0 z-20 mx-2 mt-0.5 rounded-lg border border-border bg-popover shadow-xl overflow-hidden">
                     {savedWatchlists.map(wl => (
                       <button
                         key={wl.id}
@@ -222,10 +222,10 @@ export function RightPanel({
                           setWatchlist(wl.symbols);
                           setLoadMenuOpen(false);
                         }}
-                        className="w-full flex items-center justify-between px-3 py-2 text-left hover:bg-slate-800/60 transition-colors"
+                        className="w-full flex items-center justify-between px-3 py-2 text-left hover:bg-muted transition-colors"
                       >
-                        <span className="text-[11px] text-slate-200 font-medium truncate">{wl.name}</span>
-                        <span className="text-[10px] text-slate-600 font-mono ml-2 shrink-0">{wl.symbols.length}s</span>
+                        <span className="text-[11px] text-foreground font-medium truncate">{wl.name}</span>
+                        <span className="text-[10px] text-muted-foreground font-mono ml-2 shrink-0">{wl.symbols.length}s</span>
                       </button>
                     ))}
                   </div>
@@ -243,23 +243,23 @@ export function RightPanel({
                   key={sym}
                   onClick={() => onSelectSymbol(sym, sym)}
                   className={cn(
-                    'group flex w-full items-center justify-between border-b border-slate-800/30 px-3.5 py-2.5 transition-colors hover:bg-slate-800/40',
+                    'group flex w-full items-center justify-between border-b border-border/30 px-3.5 py-2.5 transition-colors hover:bg-muted/40',
                     active && 'border-l-2 border-l-sky-500 bg-sky-500/5 pl-3'
                   )}
                 >
-                  <span className={cn('font-mono text-sm font-bold', active ? 'text-sky-400' : 'text-white')}>
+                  <span className={cn('font-mono text-sm font-bold', active ? 'text-sky-500' : 'text-foreground')}>
                     {sym}
                   </span>
                   <div className="flex items-center gap-2">
                     {q ? (
                       <>
-                        <span className="font-mono text-xs text-slate-300">${fmtP(q.price)}</span>
+                        <span className="font-mono text-xs text-foreground">${fmtP(q.price)}</span>
                         <span className={cn('w-[54px] text-right font-mono text-xs font-semibold', up ? 'text-green-400' : 'text-red-400')}>
                           {up ? '+' : ''}{q.pct.toFixed(2)}%
                         </span>
                       </>
                     ) : (
-                      <span className="font-mono text-xs text-slate-700">—</span>
+                      <span className="font-mono text-xs text-muted-foreground/40">—</span>
                     )}
                     <button
                       onClick={e => { e.stopPropagation(); removeSymbol(sym); }}
@@ -287,7 +287,7 @@ export function RightPanel({
             {profileLoading && (
               <div className="space-y-2">
                 {Array.from({ length: 7 }).map((_, i) => (
-                  <div key={i} className="h-7 animate-pulse rounded-lg bg-slate-800/40" />
+                  <div key={i} className="h-7 animate-pulse rounded-lg bg-muted/60" />
                 ))}
               </div>
             )}
@@ -305,8 +305,8 @@ export function RightPanel({
                     />
                   )}
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-bold text-white">{profile.name}</p>
-                    <p className="font-mono text-[11px] text-slate-500">
+                    <p className="truncate text-sm font-bold text-foreground">{profile.name}</p>
+                    <p className="font-mono text-[11px] text-muted-foreground">
                       {symbol} · {profile.exchange?.split(' ')[0] ?? '—'}
                     </p>
                   </div>
@@ -329,7 +329,7 @@ export function RightPanel({
                 {/* Quote rows */}
                 {quote && (
                   <div>
-                    <p className="mb-1 font-mono text-[10px] uppercase tracking-widest text-slate-600">Today</p>
+                    <p className="mb-1 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Today</p>
                     <DetailRow label="Open"       value={`$${fmtP(quote.o)}`} />
                     <DetailRow label="High"       value={`$${fmtP(quote.h)}`} />
                     <DetailRow label="Low"        value={`$${fmtP(quote.l)}`} />
@@ -357,7 +357,7 @@ export function RightPanel({
             )}
 
             {!profileLoading && !profile && (
-              <p className="py-10 text-center font-mono text-xs text-slate-600">No profile data</p>
+              <p className="py-10 text-center font-mono text-xs text-muted-foreground">No profile data</p>
             )}
           </div>
         )}
@@ -368,13 +368,13 @@ export function RightPanel({
             {newsLoading && (
               <div className="space-y-2 p-3">
                 {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="h-16 animate-pulse rounded-lg bg-slate-800/40" />
+                  <div key={i} className="h-16 animate-pulse rounded-lg bg-muted/60" />
                 ))}
               </div>
             )}
 
             {!newsLoading && news.length === 0 && (
-              <p className="py-10 text-center font-mono text-xs text-slate-600">No recent news</p>
+              <p className="py-10 text-center font-mono text-xs text-muted-foreground">No recent news</p>
             )}
 
             {news.map((item, i) => (
@@ -383,13 +383,13 @@ export function RightPanel({
                 href={item.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group block border-b border-slate-800/40 px-3.5 py-3 transition-colors hover:bg-slate-800/30"
+                className="group block border-b border-border/40 px-3.5 py-3 transition-colors hover:bg-muted/30"
               >
-                <p className="mb-1.5 text-xs font-medium leading-snug text-slate-200 line-clamp-3 group-hover:text-sky-300 transition-colors">
+                <p className="mb-1.5 text-xs font-medium leading-snug text-foreground line-clamp-3 group-hover:text-sky-500 transition-colors">
                   {item.headline}
                 </p>
-                <div className="flex items-center gap-1.5 font-mono text-[10px] text-slate-600">
-                  <span className="text-slate-500 truncate max-w-[120px]">{item.source}</span>
+                <div className="flex items-center gap-1.5 font-mono text-[10px] text-muted-foreground">
+                  <span className="text-muted-foreground truncate max-w-[120px]">{item.source}</span>
                   <span>·</span>
                   <span className="shrink-0">{timeAgo(item.datetime)}</span>
                   <ExternalLink className="ml-auto h-2.5 w-2.5 shrink-0 opacity-0 group-hover:opacity-60 transition-opacity" />

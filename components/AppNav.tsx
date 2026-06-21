@@ -7,24 +7,6 @@ import { cn } from '@/lib/utils';
 import { useTheme } from '@/components/ThemeProvider';
 import { TickerTape } from '@/components/TickerTape';
 
-function PigLogo({ size = 24 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <ellipse cx="9"  cy="14" rx="7" ry="7" fill="#fb923c" />
-      <ellipse cx="31" cy="14" rx="7" ry="7" fill="#fb923c" />
-      <ellipse cx="9"  cy="14" rx="4" ry="4" fill="#fde68a" />
-      <ellipse cx="31" cy="14" rx="4" ry="4" fill="#fde68a" />
-      <circle cx="20" cy="23" r="16" fill="#fb923c" />
-      <circle cx="14" cy="20" r="2.5" fill="#fff" />
-      <circle cx="26" cy="20" r="2.5" fill="#fff" />
-      <circle cx="14.8" cy="20.8" r="1.3" fill="#0f172a" />
-      <circle cx="26.8" cy="20.8" r="1.3" fill="#0f172a" />
-      <ellipse cx="20" cy="28" rx="7" ry="5" fill="#fcd5a0" />
-      <circle cx="17" cy="28.5" r="1.6" fill="#c2410c" />
-      <circle cx="23" cy="28.5" r="1.6" fill="#c2410c" />
-    </svg>
-  );
-}
 
 const NAV_LINKS = [
   { label: 'Home',       href: '/home'      },
@@ -52,9 +34,8 @@ export function AppNav() {
         {/* Logo */}
         <Link
           href="/home"
-          className="flex items-center gap-1.5 mr-4 font-bold text-sm shrink-0 hover:opacity-90 transition-opacity text-foreground"
+          className="flex items-center mr-6 font-black text-xl shrink-0 hover:opacity-90 transition-opacity text-foreground"
         >
-          <PigLogo size={22} />
           <span>Chart<span className="text-orange-400">Hog</span></span>
         </Link>
 

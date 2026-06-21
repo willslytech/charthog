@@ -6,6 +6,7 @@ import { SymbolSearch } from '@/components/SymbolSearch';
 import { RightPanel } from '@/components/RightPanel';
 import { AppNav } from '@/components/AppNav';
 import { cn } from '@/lib/utils';
+import { useTheme } from '@/components/ThemeProvider';
 import type { CandleBar, StockQuote, Timeframe } from '@/lib/types';
 import {
   TrendingUp,
@@ -23,36 +24,6 @@ const StockChart = dynamic(
 
 const TIMEFRAMES: Timeframe[] = ['30M', '1H', '4H', '1D', '1W', '1M', '3M', '6M', '1Y', 'ALL'];
 
-// ── Pig SVG logo ─────────────────────────────────────────
-function PigLogo({ size = 36 }: { size?: number }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 40 40"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden="true"
-    >
-      {/* Ears */}
-      <ellipse cx="9"  cy="14" rx="7" ry="7" fill="#fb923c" />
-      <ellipse cx="31" cy="14" rx="7" ry="7" fill="#fb923c" />
-      <ellipse cx="9"  cy="14" rx="4" ry="4" fill="#fde68a" />
-      <ellipse cx="31" cy="14" rx="4" ry="4" fill="#fde68a" />
-      {/* Head */}
-      <circle cx="20" cy="23" r="16" fill="#fb923c" />
-      {/* Eyes */}
-      <circle cx="14" cy="20" r="2.5" fill="#fff" />
-      <circle cx="26" cy="20" r="2.5" fill="#fff" />
-      <circle cx="14.8" cy="20.8" r="1.3" fill="#0f172a" />
-      <circle cx="26.8" cy="20.8" r="1.3" fill="#0f172a" />
-      {/* Snout */}
-      <ellipse cx="20" cy="28" rx="7" ry="5" fill="#fcd5a0" />
-      {/* Nostrils */}
-      <circle cx="17" cy="28.5" r="1.6" fill="#c2410c" />
-      <circle cx="23" cy="28.5" r="1.6" fill="#c2410c" />
-    </svg>
-  );
-}
 
 // ── Loading skeleton ──────────────────────────────────────
 function ChartSkeleton() {
@@ -86,6 +57,7 @@ const fmtVol = (n: number) => {
 
 // ── Main page ─────────────────────────────────────────────
 export default function Home() {
+  const { theme } = useTheme();
   const [symbol, setSymbol] = useState('AAPL');
   const [symbolName, setSymbolName] = useState('Apple Inc.');
   const [timeframe, setTimeframe] = useState<Timeframe>('30M');
@@ -153,7 +125,7 @@ export default function Home() {
       <AppNav />
 
       {/* ── Chart sub-header: symbol search ── */}
-      <header className="shrink-0 border-b border-slate-800/60 bg-background/80 backdrop-blur-md z-30">
+      <header className="shrink-0 border-b border-border bg-background/80 backdrop-blur-md z-30">
         <div className="px-4 sm:px-6 h-11 flex items-center justify-end gap-4">
           <SymbolSearch value={symbol} onSelect={handleSelect} />
         </div>
@@ -178,7 +150,7 @@ export default function Home() {
         )}
 
         {/* ── Price card ── */}
-        <div className="rounded-2xl border border-slate-800/80 bg-card px-5 py-4">
+        <div className="rounded-2xl border border-border bg-card px-5 py-4">
           <div className="flex flex-wrap items-start justify-between gap-4">
             {/* Symbol + name */}
             <div>
@@ -186,7 +158,7 @@ export default function Home() {
                 <h1 className="text-2xl sm:text-3xl font-bold font-mono tracking-tight text-foreground">
                   {symbol}
                 </h1>
-                <span className="text-sm text-slate-400 hidden sm:block">{symbolName}</span>
+                <span className="text-sm text-muted-foreground hidden sm:block">{symbolName}</span>
               </div>
 
               {quote ? (
@@ -230,7 +202,7 @@ export default function Home() {
         {/* ── Toolbar: timeframes + hog toggle ── */}
         <div className="flex items-center justify-between gap-3 flex-wrap">
           {/* Timeframe buttons */}
-          <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-800/50 border border-slate-700/40">
+          <div className="flex items-center gap-1 p-1 rounded-xl bg-muted border border-border">
             {TIMEFRAMES.map((tf) => (
               <button
                 key={tf}
@@ -239,7 +211,7 @@ export default function Home() {
                   'px-3 py-1.5 rounded-lg text-xs font-mono font-medium transition-all duration-150',
                   timeframe === tf
                     ? 'bg-sky-500 text-white shadow-sm shadow-sky-500/30'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-background'
                 )}
               >
                 {tf}
@@ -254,7 +226,7 @@ export default function Home() {
               disabled={loading}
               className={cn(
                 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium',
-                'border border-slate-700/50 text-slate-400 hover:text-slate-200 hover:border-slate-600',
+                'border border-border text-muted-foreground hover:text-foreground hover:border-border/80',
                 'transition-all duration-150 disabled:opacity-50'
               )}
               aria-label="Refresh"
@@ -270,10 +242,12 @@ export default function Home() {
                 'flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all duration-150',
                 hogIndicator
                   ? 'bg-green-500/10 border-green-500/40 text-green-400 shadow-sm shadow-green-500/20'
-                  : 'border-slate-700/50 text-slate-400 hover:text-slate-200 hover:border-slate-600'
+                  : 'border-border text-muted-foreground hover:text-foreground hover:border-border/80'
               )}
             >
-              <PigLogo size={16} />
+              <span className="font-black text-[11px] leading-none">
+                <span>C</span><span className="text-orange-400">H</span>
+              </span>
               <span>Mega-Alpha</span>
               <span
                 className={cn(
@@ -286,8 +260,8 @@ export default function Home() {
         </div>
 
         {/* ── Chart ── */}
-        <div className="rounded-2xl border border-slate-800/80 bg-card p-2 sm:p-3 overflow-hidden">
-          <StockChart data={candles} showHogIndicator={hogIndicator} height={500} />
+        <div className="rounded-2xl border border-border bg-card p-2 sm:p-3 overflow-hidden">
+          <StockChart data={candles} showHogIndicator={hogIndicator} height={500} isDark={theme === 'dark'} />
         </div>
 
         {/* ── Footer hint ── */}
@@ -306,7 +280,7 @@ export default function Home() {
       </main>
 
       {/* ── Right panel ── */}
-      <aside className="hidden lg:flex w-72 xl:w-80 shrink-0 border-l border-slate-800/80 overflow-hidden flex-col">
+      <aside className="hidden lg:flex w-72 xl:w-80 shrink-0 border-l border-border overflow-hidden flex-col">
         <RightPanel symbol={symbol} quote={quote} onSelectSymbol={handleSelect} />
       </aside>
 
