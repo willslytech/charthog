@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { RefreshCw, Plus, X, ExternalLink, BookMarked, ChevronDown } from 'lucide-react';
+import { RefreshCw, Plus, X, ExternalLink, BookMarked, ChevronDown, Save, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { StockQuote } from '@/lib/types';
-import { type SavedWatchlist, getWatchlists } from '@/lib/watchlistStore';
+import { type SavedWatchlist, getWatchlists, saveWatchlists } from '@/lib/watchlistStore';
 import { getFinnhubWS } from '@/lib/finnhubWS';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -84,6 +84,9 @@ export function RightPanel({
   const [newsLoading, setNewsLoading] = useState(false);
   const [profile, setProfile]       = useState<Profile | null>(null);
   const [profileLoading, setProfileLoading] = useState(false);
+  const [saveOpen, setSaveOpen]     = useState(false);
+  const [saveName, setSaveName]     = useState('');
+  const [saveSuccess, setSaveSuccess] = useState(false);
   const cancelRef = useRef(false);
   const prevClosesRef = useRef<Record<string, number>>({});
 
@@ -178,6 +181,18 @@ export function RightPanel({
   const removeSymbol = (sym: string) => {
     setWatchlist(prev => prev.filter(s => s !== sym));
     setWatchQuotes(prev => { const n = { ...prev }; delete n[sym]; return n; });
+  };
+
+  const saveCurrentWatchlist = () => {
+    const name = saveName.trim() || `Watchlist ${new Date().toLocaleDateString()}`;
+    const existing = getWatchlists();
+    const entry: SavedWatchlist = { id: Date.now().toString(), name, symbols: watchlist, createdAt: Date.now() };
+    saveWatchlists([...existing, entry]);
+    setSavedWatchlists(getWatchlists());
+    setSaveName('');
+    setSaveOpen(false);
+    setSaveSuccess(true);
+    setTimeout(() => setSaveSuccess(false), 2000);
   };
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -302,6 +317,48 @@ export function RightPanel({
               <p className="py-10 text-center font-mono text-xs text-slate-600">
                 No symbols — add one above
               </p>
+            )}
+
+            {/* ── Save watchlist ── */}
+            {watchlist.length > 0 && (
+              <div className="border-t border-border/50 p-2.5">
+                {!saveOpen ? (
+                  <button
+                    onClick={() => setSaveOpen(true)}
+                    className={cn(
+                      'flex w-full items-center justify-center gap-2 rounded-lg border py-2 text-[11px] font-mono font-medium transition-all duration-150',
+                      saveSuccess
+                        ? 'border-green-500/40 bg-green-500/10 text-green-400'
+                        : 'border-border text-muted-foreground hover:border-sky-500/40 hover:text-sky-400'
+                    )}
+                  >
+                    {saveSuccess ? <><Check className="h-3 w-3" /> Saved!</> : <><Save className="h-3 w-3" /> Save watchlist</>}
+                  </button>
+                ) : (
+                  <div className="flex gap-2">
+                    <input
+                      autoFocus
+                      value={saveName}
+                      onChange={e => setSaveName(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter') saveCurrentWatchlist(); if (e.key === 'Escape') setSaveOpen(false); }}
+                      placeholder="Watchlist name…"
+                      className="min-w-0 flex-1 rounded-lg border border-border bg-muted px-2.5 py-1.5 font-mono text-xs text-foreground placeholder:text-muted-foreground focus:border-sky-500/60 focus:outline-none"
+                    />
+                    <button
+                      onClick={saveCurrentWatchlist}
+                      className="rounded-lg border border-sky-500/40 bg-sky-500/10 px-2.5 py-1.5 text-xs text-sky-400 hover:bg-sky-500/20 transition-colors"
+                    >
+                      <Save className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      onClick={() => setSaveOpen(false)}
+                      className="rounded-lg border border-border px-2 py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                )}
+              </div>
             )}
           </div>
         )}

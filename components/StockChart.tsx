@@ -19,6 +19,7 @@ const BEAR         = '#ef4444';
 const ACCENT       = '#38bdf8';
 const EMA200_COLOR = '#a855f7';
 const VWAP_COLOR   = '#f59e0b';
+const RSI_COLOR    = '#60a5fa';
 
 function chartTextColor(isDark: boolean) {
   return isDark ? '#94a3b8' : '#1d4ed8';
@@ -34,6 +35,27 @@ function computeEmaValues(closes: number[], period: number): number[] {
     out.push(e);
   }
   return out;
+}
+
+function computeRSI(data: CandleBar[], period = 14): { time: number; value: number }[] {
+  if (data.length < period + 1) return [];
+  const result: { time: number; value: number }[] = [];
+  let avgGain = 0;
+  let avgLoss = 0;
+  for (let i = 1; i <= period; i++) {
+    const d = data[i].close - data[i - 1].close;
+    if (d > 0) avgGain += d; else avgLoss -= d;
+  }
+  avgGain /= period;
+  avgLoss /= period;
+  result.push({ time: data[period].time, value: avgLoss === 0 ? 100 : 100 - 100 / (1 + avgGain / avgLoss) });
+  for (let i = period + 1; i < data.length; i++) {
+    const d = data[i].close - data[i - 1].close;
+    avgGain = (avgGain * (period - 1) + Math.max(d, 0)) / period;
+    avgLoss = (avgLoss * (period - 1) + Math.max(-d, 0)) / period;
+    result.push({ time: data[i].time, value: avgLoss === 0 ? 100 : 100 - 100 / (1 + avgGain / avgLoss) });
+  }
+  return result;
 }
 
 function computeVWAP(data: CandleBar[]): { time: number; value: number }[] {
@@ -68,6 +90,7 @@ export function StockChart({ data, showHogIndicator = false, height = 500, isDar
   const ema21Ref     = useRef<ISeriesApi<'Line'> | null>(null);
   const ema55Ref     = useRef<ISeriesApi<'Line'> | null>(null);
   const vwapRef      = useRef<ISeriesApi<'Line'> | null>(null);
+  const rsiRef       = useRef<ISeriesApi<'Line'> | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const markersRef   = useRef<any>(null);
 
@@ -110,12 +133,27 @@ export function StockChart({ data, showHogIndicator = false, height = 500, isDar
       wickUpColor: BULL,   wickDownColor: BEAR,
     });
 
-    // ── Volume (bottom 12%) ──────────────────────────────────────────────────
+    // ── Volume (bottom 10%) ──────────────────────────────────────────────────
     const volumeSeries = chart.addSeries(HistogramSeries, {
       priceFormat: { type: 'volume' },
       priceScaleId: 'vol',
     });
-    chart.priceScale('vol').applyOptions({ scaleMargins: { top: 0.88, bottom: 0 } });
+    chart.priceScale('vol').applyOptions({ scaleMargins: { top: 0.90, bottom: 0 } });
+
+    // ── RSI 14 (18% panel above volume) ──────────────────────────────────────
+    const rsiSeries = chart.addSeries(LineSeries, {
+      priceScaleId: 'rsi',
+      color: RSI_COLOR,
+      lineWidth: 1,
+      lastValueVisible: true,
+      priceLineVisible: false,
+    });
+    chart.priceScale('rsi').applyOptions({ scaleMargins: { top: 0.72, bottom: 0.10 } });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (rsiSeries as any).applyOptions({ autoscaleInfoProvider: () => ({ priceRange: { minValue: 0, maxValue: 100 } }) });
+    rsiSeries.createPriceLine({ price: 70, color: '#ef4444', lineWidth: 1, lineStyle: 2, axisLabelVisible: false, title: '' });
+    rsiSeries.createPriceLine({ price: 50, color: '#475569', lineWidth: 1, lineStyle: 2, axisLabelVisible: false, title: '' });
+    rsiSeries.createPriceLine({ price: 30, color: '#22c55e', lineWidth: 1, lineStyle: 2, axisLabelVisible: false, title: '' });
 
     // ── EMA 200 — always visible ─────────────────────────────────────────────
     const ema200Series = chart.addSeries(LineSeries, {
@@ -155,6 +193,7 @@ export function StockChart({ data, showHogIndicator = false, height = 500, isDar
     volumeRef.current = volumeSeries;
     ema200Ref.current = ema200Series;
     vwapRef.current   = vwapSeries;
+    rsiRef.current    = rsiSeries;
     ema21Ref.current  = ema21Series;
     ema55Ref.current  = ema55Series;
 
@@ -168,7 +207,7 @@ export function StockChart({ data, showHogIndicator = false, height = 500, isDar
       ro.disconnect();
       chart.remove();
       chartRef.current = candleRef.current = volumeRef.current = null;
-      ema200Ref.current = vwapRef.current = null;
+      ema200Ref.current = vwapRef.current = rsiRef.current = null;
       ema21Ref.current = ema55Ref.current = markersRef.current = null;
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -217,6 +256,14 @@ export function StockChart({ data, showHogIndicator = false, height = 500, isDar
       const vwapData = computeVWAP(data);
       vwapRef.current.setData(
         vwapData.map(d => ({ time: d.time as UTCTimestamp, value: d.value }))
+      );
+    }
+
+    // RSI 14
+    if (rsiRef.current) {
+      const rsiData = computeRSI(data);
+      rsiRef.current.setData(
+        rsiData.map(d => ({ time: d.time as UTCTimestamp, value: d.value }))
       );
     }
 
@@ -272,8 +319,19 @@ export function StockChart({ data, showHogIndicator = false, height = 500, isDar
 
           {/* VWAP */}
           <div className="flex items-center gap-2 mt-0.5 pt-1 border-t border-slate-700/50">
-            <span className="w-5 h-[2px] rounded-full inline-block" style={{ background: VWAP_COLOR, borderTop: `2px dashed ${VWAP_COLOR}`, height: 0 }} />
+            <span className="w-5 inline-block" style={{ borderTop: `2px dashed ${VWAP_COLOR}` }} />
             <span className="text-xs font-mono text-slate-300">VWAP</span>
+          </div>
+
+          {/* RSI */}
+          <div className="flex items-center gap-2">
+            <span className="w-5 h-[2px] rounded-full inline-block" style={{ background: RSI_COLOR }} />
+            <span className="text-xs font-mono text-slate-300">RSI 14</span>
+          </div>
+          <div className="flex items-center gap-3 text-[10px] font-mono text-slate-500">
+            <span className="flex items-center gap-1"><span className="w-2 h-[1px] inline-block bg-red-500" />70</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-[1px] inline-block bg-slate-600" />50</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-[1px] inline-block bg-green-500" />30</span>
           </div>
         </div>
       )}
